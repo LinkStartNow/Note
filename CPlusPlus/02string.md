@@ -71,7 +71,7 @@ else cout << "no" << endl;
 
 	```c++
 	string s = "abcccde";
-	cout << s.substr(2, 59);
+	cout << s.substr(2, 59) << endl;
 	```
 
 - 求字符串长度
