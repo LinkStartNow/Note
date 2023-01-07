@@ -1,4 +1,5 @@
 # Print的一丢丢知识
+
 ***详情还是可以直接看[大佬的博客](https://blog.csdn.net/sinat_28576553/article/details/81154912?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522166454023016782388065745%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=166454023016782388065745&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-2-81154912-null-null.142^v51^pc_rank_34_2,201^v3^control_2&utm_term=python%E7%9A%84print&spm=1018.2226.3001.4187)***
 `print(*objects, sep=' ', end='\n', file=sys.stdout)`
 这是参数列表，可见print是不限制输出的类型的，不管是啥都能输出
@@ -29,7 +30,7 @@ print(a, b, c, 'hello', '!', sep='.', end='hello world!')
     其中的x和y也可以先用`*`占位，最后同样从元组中读出他俩的值，当然x和y也可以不填使用默认值
     `print('%*.*f'%(10, 10, 3.14))`
 3. 转换标志
-不知道为啥这些转换标志好像 ***不能叠加使用***
+   不知道为啥这些转换标志好像 ***不能叠加使用***
     1. `-`表示左对齐（默认右对齐）
         也就是说有空格什么的填充字符是填充在右侧的
         `print('%-*.*f'%(10, 10, 3.14))`
