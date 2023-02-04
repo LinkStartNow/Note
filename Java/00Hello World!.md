@@ -30,7 +30,7 @@
 
 4. `main`方法是`Java`应用程序的入口方法，格式固定：
 
-	`public static void mian(String args){...}`
+	`public static void mian(String[] args){...}`
 
 	其中`args`的名字不用固定
 
