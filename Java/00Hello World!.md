@@ -18,6 +18,39 @@
 
 3. 最后用`java 文件名`来运行生成的`.class`文件
 
+## 命令行参数
+
+一般在用`cmd`运行`java`程序的时候可以使用，在编译成功后，运行的时候可以添加命令行参数
+
+具体如下：
+
+源程序为：
+
+```java
+public class abc {
+	public static void main(String[] args) {
+		for (String x : args) {
+			System.out.println(x);
+		}	
+	}	
+}
+```
+
+命令行使用的指令为：
+
+先编译：`javac abc.java`
+
+后运行：`java abc 我 也 不是 很懂`
+
+> 输出：
+>
+> 我
+> 也
+> 不是
+> 很懂
+
+传入的各个又空格分开的字符串被当做多个字符串参数传入字符串数组，输出正确！
+
 ---
 
 ## 总结

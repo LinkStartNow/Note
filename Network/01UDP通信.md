@@ -215,4 +215,123 @@ WSACleanup()
 
 # 客户端
 
+客户端设计步骤为：
+
+1. 加载库
+2. 创建套接字
+3. 发送数据
+4. 接收数据
+5. 关闭套接字，卸载库
+
+## 绑定IP地址
+
 客户端首先是发信息的，于是可以**不用绑定IP地址**而直接发送，这样发送信息的时候操作系统会自动选择合适的IP分配给它
+
+但由于要发送给对应的服务端，所以必须要配置服务端的IP地址，对应的函数为`inet_addr`
+
+，该方法用来将我们平常用的十进制四等分字符转换成`ulong`类型的IP地址，用于赋值
+
+```c++
+addrServer.sin_addr.S_un.S_addr = inet_addr("10.56.22.62"); // 绑定指定的IP地址
+```
+
+**注意：这个IP地址的点千万别写成逗号了，之前莫名出bug好久才发现的**
+
+## 广播
+
+广播可以采用直接广播和有限广播
+
+### 直接广播
+
+>  直接广播就是对某个指定网段内发出广播
+
+我们都知道某个网段的最后主机号全为1是广播的IP地址，于是就可以以此来确定要广播的网段
+
+使用起来也很方便，就是把绑定的目标发送IP地址设定为该网段的广播IP地址即可
+
+例如：
+
+```c++
+// 直接广播
+addrServer.sin_addr.S_un.S_addr = inet_addr("192.168.3.255");
+```
+
+### 有限广播
+
+> 有限广播就是对当前主机处于的网段发出广播
+
+有限广播的IP地址为全1，但是要申请广播权限
+
+**注意：这里传入的bool类型的变量一定要赋值为`true`，之前瞎赋值吃过苦头，找了半天bug**
+
+```c++
+// 有限广播
+addrServer.sin_addr.S_un.S_addr = inet_addr("255, 255, 255, 255");
+
+//申请广播权限
+bool val = true;
+err = setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (char*)&val, sizeof(val));
+if (err == SOCKET_ERROR) {
+    cout << "setsockopt error:" << WSAGetLastError() << endl;
+    return 1;
+}
+else {
+    cout << "setsockopt success" << endl;
+}
+```
+
+----
+
+# 阻塞&非阻塞
+
+> 阻塞：必须等待一件事完成之后才能去做另一件事
+>
+> 非阻塞：不一定要一直等待某一件事有没有完成，可以一边做其他事
+
+socket默认是阻塞的，我们可以将socket设置为非阻塞模式来实现接收的非阻塞
+
+```c++
+// 把套接字设置成非阻塞
+u_long iMode = 1;
+ioctlsocket(sock, FIONBIO, &iMode); 
+```
+
+## 缓冲区
+
+缓冲区指操作系统给每个进程分配4G虚拟空间，0~2G用户控件，2G~4G内核控件
+
+我们可以用`getsockopt`来获取缓冲区大小
+
+```c++
+int nRecvBufSize = 0;
+int nSendBufSize = 0;
+int n = sizeof(int);
+getsockopt(sock, SOL_SOCKET, 
+           SO_RCVBUF, 
+           (char*)&nRecvBufSize, 
+           &n);
+getsockopt(sock, SOL_SOCKET,
+           SO_SNDBUF,
+           (char*)&nSendBufSize,
+           &n);
+cout << "nRecvBufSize = " << nRecvBufSize << ", nSendBufSize:" << nSendBufSize << endl;
+```
+
+前面的发送和接收方法实际上都是对缓冲区的复制
+
+> `sendto`阻塞：当发送缓冲区控件不够的时候，等待发送缓冲区空间足够大以后再发送
+>
+> `sendto`非阻塞：当发送缓冲区空间不够的时候，当前缓冲区有多大空间，就往缓冲区里面拷贝多少数据，剩下的数据不拷贝
+
+---
+
+# UDP相关
+
+`UDP`是数据报协议，当需要拷贝的数据大于目前有的空间时，则会只传输对应空间的数据，丢弃剩余的数据
+
+## UDP特点：
+
+1. 面向非连接，接收数据的时候，可以接受任何客户端发送的数据，可以使一对一，也可以是一对多（组播、广播）
+2. 数据报文的通讯方式，数据包不可拆分
+3. 传输效率高（与TCP对比）
+4. 会产生丢包，没有校验，可能会出现乱序（也就是后发的信息先被收到）
