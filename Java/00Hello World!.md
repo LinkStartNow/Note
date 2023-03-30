@@ -53,6 +53,77 @@ public class abc {
 
 ---
 
+## 不定数输入
+
+### 读一行数字
+
+可以使用一个字符串先读入整行，然后按空格分割给新的字符串数组，然后通过`Integer`类的`parseInt`方法转成整形（当然也可以按照需要转换成其他的），举例：
+
+```java
+import java.util.Scanner;
+
+public class Test {
+    public static void main(String[] args) {
+    	Scanner s = new Scanner(System.in);
+    	String ssr = s.nextLine();
+    	String[] arrs = ssr.split(" ");
+    	int[] a = new int[arrs.length];
+    	for (int i = 0; i < a.length; ++i) {
+    		a[i] = Integer.parseInt(arrs[i]);
+    	}
+    	for (int i = 0; i < a.length; ++i) {
+    		System.out.println("第" + i + "个：" + a[i]);
+    	}
+    }
+}
+```
+
+> 输入：1 23 15 123
+>
+> 输出：
+>
+> 第0个：1
+> 第1个：23
+> 第2个：15
+> 第3个：123
+
+---
+
+### 读入多组数据
+
+可以用`Scanner`对象的`hasNext`方法即可判断后面是否还有数据，举例：
+
+```java
+import java.util.Scanner;
+public class Test {
+    public static void main(String[] args) {
+        Scanner s = new Scanner(System.in);
+        while (s.hasNext()) {
+            int n = s.nextInt();
+            int[] a = new int[n];
+            for (int i = 0; i < n; ++i) {
+                a[i] = s.nextInt();
+            }
+            for (int i = 0; i < a.length; ++i) {
+                for (int j = 0; j < a.length - i - 1; ++j) {
+                    if (a[j] > a[j + 1]) {
+                        int t = a[j];
+                        a[j] = a[j + 1];
+                        a[j + 1] = t;
+                    }
+                }
+            }
+            for (int i = 0; i < n - 1; ++i) {
+                System.out.printf("%d,", a[i]);
+            }
+            System.out.println(a[n - 1]);
+        }
+    }
+}
+```
+
+---
+
 ## 总结
 
 1. `Java`对大小写敏感
