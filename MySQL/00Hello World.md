@@ -1,4 +1,109 @@
-# 字符串类型的区别
+# 注意点：
+
+1. MySQL不区分大小写
+
+2. MySQL对于引号的区分和Python一样，没有双引号和单引号的区别，但嵌套的时候要注意
+
+3. 何时用having何时用where？
+
+	作为条件的列如果是表中原来就有的，就用where
+
+	如果是原来没有的列，新产生的列作为条件的时候，就用having加条件
+	
+4. 查询出来单个数据是可以作为值进行判断的：
+
+  ```mysql
+  #4、查询选修了全部课程的学生的信息!!!
+  # 4.1、查询课程数
+  select count(*) from course;
+  # 4.2、实现
+  select * from student where s in (select s from sc group by s having count(*) = (select count(*) from course));
+  ```
+
+5. 查询结果的末尾可以通过逗号隔开来增加列
+
+  **注意：这里还需要加上and表示对应学生的课程加到对应学生的行中**
+
+  ```mysql
+  #8、查询每个同学01课程的成绩，包括学生信息!!!
+  # 8.1、查询每个同学01课程的成绩
+  select score from sc where c = '01';
+  # 8.2、实现
+  select *, (select score from sc where c = '01' and sc.S = student.S) score01 from student;
+  ```
+
+6. 上面提到过的表中未出现的属性判断要用`having`
+
+  这里的表指的是`from`后面跟着的表
+
+  ```mysql
+  #9、查询01课程分数>02课程分数的学生的信息!!!
+  select *, (select score from sc where c = '01' and sc.S = student.S) score01, 
+  (select score from sc where c = '02' and sc.S = student.S) score02
+  from student having score01 > score02;
+  ```
+
+7. 属性值判空可以用`is not null`
+
+  ```mysql
+  #10、查询同时学习01课程和02课程的学生的信息
+  select *, (select score from sc where c = '01' and sc.S = student.S) score01, 
+  (select score from sc where c = '02' and sc.S = student.S) score02
+  from student having score01 is not null and score02 is not null;
+  ```
+
+8. MySQL中的除法是遵循四舍五入的
+
+	比如下面的代码查询结果为3：
+
+	```mysql
+	DROP FUNCTION IF EXISTS YYDS;
+	DELIMITER //
+	CREATE FUNCTION YYDS(a INT, b INT)
+	RETURNS INT
+	BEGIN
+		RETURN a / b;
+	END //
+	DELIMITER ;
+	
+	SELECT YYDS(5, 2);
+	```
+
+	可以使用`FLOOR`函数来向下取整
+
+	```mysql
+	DROP FUNCTION IF EXISTS YYDS;
+	DELIMITER //
+	CREATE FUNCTION YYDS(a INT, b INT)
+	RETURNS INT
+	BEGIN
+		RETURN FLOOR(a / b);
+	END //
+	DELIMITER ;
+	
+	SELECT YYDS(5, 2); # 2
+	```
+
+	也可以使用`CEIL`函数来向上取整
+
+	```mysql
+	DROP FUNCTION IF EXISTS YYDS;
+	DELIMITER //
+	CREATE FUNCTION YYDS(a INT, b INT)
+	RETURNS INT
+	BEGIN
+		RETURN CEIL(a / b);
+	END //
+	DELIMITER ;
+	
+	SELECT YYDS(5, 4);  
+	```
+
+	
+
+---
+
+# 字符串
 
 MySQL中字符串有三种类型：
 
@@ -7,6 +112,13 @@ MySQL中字符串有三种类型：
 3. `nvarchar(n)`：如果存'hello'，实际存的是'hello'，但存的是宽字节字符，一个字符占两个字节
 
 **注意：这里的n指的是字符数，而不是字节数，所以不用管中文字符还是英文字符都可以输入n个**
+
+MySQL中可以使用`CONCAT`函数将多个字符串拼接成一个字符串，例如：
+
+```mysql
+SET @x = CONCAT('Hello', ' ', 'World', '!');
+SELECT @x;
+```
 
 ---
 
@@ -34,105 +146,10 @@ revoke insert on first from max;
 
 ---
 
-## 删除表
+# 规范
 
-语法为：`drop table 表名`，例如：
+1. 关键字和函数名称全部大写；
 
-```mysql
-drop table first;
-```
+2. 数据库名、表名、表别名、字段名、字段别名等全部小写；
 
----
-
-## 创建表
-
-语法为：`create table 表名 (列名1 数据类型 约束, 列明2 数据类型 约束, ...)`，例如：
-
-**注意：这里是为了观察清楚于是分行了，实际上不强制分行**
-
-```mysql
-create table test (
-id int primary key auto_increment, 
-name varchar(45) not null, 
-sex enum('男', '女') default '男', 
-age int
-);
-```
-
-> 约束：
->
-> 主键： primary key， 只能一列是主键列，该列的数据不能重复，且不能为空
->
-> 唯一： unique， 每个表中可以有多个唯一列，数据不能重复，可以为空
->
-> 默认值 default
->
-> 非空 not null
->
-> 自增： auto_increment
->
-> 外键约束：...
-
----
-
-## 修改表
-
-语法为：`alter table 表名 具体操作`
-
-接下来细分一些操作：
-
-### 增加表
-
-语法为：`alter table 表名 add column 列名 数据类型 约束`，例如：
-
-```mysql
-alter table test add column 学校 int;
-```
-
-### 修改列的属性
-
-语法为：`alter table 表名 modify 列名 数据类型 约束`，例如：
-
-```mysql
-alter table test modify 学校 varchar(100);
-```
-
-### 删除列
-
-语法为：`alter table 表名 drop 列名`，例如：
-
-```mysql
-alter table test drop 学校;
-```
-
----
-
-## 插入数据
-
-语法为：`insert 表名 values (值1, 值2, ...)`
-
-可以理解为：把所有的列都给选中了，所以是要按照建表的顺序插入数据，而且数目要一一对应，例如：
-
-```mysql
-insert test values (1, 'zly', '女', 19);
-```
-
-这里还有一种可以指定列添加数据的方法：
-
-语法为：`insert into 表名 (表名1, 表名2, ...) values (值1, 值2, ...)`，例如：
-
-例1：
-
-```mysql
-insert test (name, age) values ('hd', 20);
-```
-
-> 解释：因为id在约束中加了自增于是是有默认值的，sex在约束中加了默认值所以也有默认值。因此，这两个可以不填
-
-例2：
-
-```mysql
-insert test (name) values ('why');
-```
-
-> 解释：因为age没有说不能为空，所以这里不给值也没事
+3. SQL 语句必须以分号结尾。

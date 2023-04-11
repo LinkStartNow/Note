@@ -809,6 +809,17 @@ for (int v : vec3) { // 2 5 7
 } cout << endl;
 ```
 
+二维初始化：
+
+```c++
+int m = 30, n = 40;
+vector<vector<int>> x(20, vector<int>(30));
+vector<vector<int>> y(m, vector<int>(n)); // 获得m行n列的二维数组
+cout << x[0][0] << endl; // 0
+cout << y[0].size() << endl; // 40
+cout << y.size() << endl; // 30
+```
+
 ---
 
 ### 增
