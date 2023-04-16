@@ -18,6 +18,41 @@
 
 3. 最后用`java 文件名`来运行生成的`.class`文件
 
+**注意：尽量不要使用多个Scanner对象读入数据**
+
+```java
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello World!");
+        Scanner scanner = new Scanner(System.in);
+        Scanner scanner2 = new Scanner(System.in);
+
+        int a = scanner.nextInt();
+
+        int b = scanner2.nextInt();
+
+        System.out.println("a = " + a);
+        System.out.println("b = " + b);
+    }
+}
+```
+
+> 输入：
+>
+> 1 2
+>
+> 3
+>
+> 输出：
+>
+> a = 1
+>
+> b = 3
+
+[具体解释看某大佬的]([(181条消息) [Java\] [缓冲区] 不要在同一个输入流使用多个Scanner_小米煎蛋的博客-CSDN博客](https://blog.csdn.net/twllx/article/details/81739142))
+
 ## 命令行参数
 
 一般在用`cmd`运行`java`程序的时候可以使用，在编译成功后，运行的时候可以添加命令行参数
