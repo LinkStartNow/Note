@@ -80,7 +80,11 @@
 
 使用`useradd`方法
 
-不过需要root权限，例如：`sudo useradd -s /bin/bash -d /home/tst -m tst`
+不过需要root权限，例如：
+
+```bash
+sudo useradd -s /bin/bash -d /home/tst -m tst
+```
 
 > 添加一个用户，该用户登录的shell是/bin/bash，放在文件夹/home/tst中，用户名字为tst
 
