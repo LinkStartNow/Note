@@ -33,7 +33,7 @@
 
 ```
 myapp:main.o add.o des.o mul.o sub.o
-	gcc main.o add.o des.o mul.o sub.
+	gcc main.o add.o des.o mul.o sub.o
 ```
 
 **注意：这里的命令和原本的命令一模一样，也就是说目录也需要在这里指定**
@@ -117,7 +117,7 @@ myapp:main.o add.o des.o mul.o sub.o
 	生成命令
 ```
 
-最终利用上面这些特性化简完makefile就变成了，如下的简略形式
+最终利用上面这些特性化简完makefile就变成了如下的简略形式
 
 ```
 #version 1.0
