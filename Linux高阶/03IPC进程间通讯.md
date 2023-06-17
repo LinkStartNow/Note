@@ -224,3 +224,81 @@ int main() {
 
 **注意：决定是原子还是非原子取决于用户发的数据包大小，如果小于等于管道大小则是原子传输，否则是非原子**
 
+# 文件映射表mmap
+
+需要包含头文件`#include <sys/mman.h>`
+
+多个进程间通过MAP_SHARED共享映射，实现进程通信
+
+通常配合`munmap(ptr, size);`方法释放映射内存
+
+## mmap函数
+
+### 参数
+
+1. 空间：可以自己创建（用malloc在堆区创建然后传入），也可以填NULL让系统在库内存创建
+2. 大小：文件映射区的大小，**不能为0，否则创建映射失败**
+3. 映射权限：也就是页的权限，可以用按位或的方式使用多个权限
+
+4. 映射方式：分为共享映射和私有映射
+	- 私有映射：MAP_PRIVATE，将映射文件中的内容拷贝到一份映射内存中
+	- 共享映射：MAP_SHARED，自带sync同步机制，在共享映射中对任意一端的修改，都会同步给其他端，实现数据共享
+
+5. 文件描述符
+
+6. 偏移量：默认传0，如果使用的话要传4k或4k的整数倍，因为内存以页为单位，而一页为4k
+
+> 映射权限一般有这些：
+>
+> 1. PORT_READ：只读
+> 2. PORT_WRITE：只写
+> 3. PORT_EXEC：执行
+> 4. PORT_NONE：无权限
+
+### 返回值
+
+成功则返回映射内存地址ptr，失败返回MAP_FAILED、
+
+### 例子
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+int main() {
+	int fd = open("mmap_file", O_RDWR);
+	
+	int size = lseek(fd, 0, SEEK_END);
+	
+	int* p = NULL;
+	if ((p = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED) {
+		perror("mmap failed");
+		return 1;
+	}
+
+	close(fd);
+
+	sleep(10);
+
+	p[0] = 0x31323334;
+	printf("write success!\n");
+	
+	munmap(p, size);
+	return 0;
+}
+```
+
+> 将文件前4个字节的内容改成了1234
+
+## 拓展空文件
+
+可以利用`ftruncate(fd, sizeof(msg))`，来拓展一个msg结构体的大小
+
+## 其他作用
+
+- 大文件处理，切割处理
+- 零拷贝，减少拷贝开销，**注意：并不是指完全不拷贝，而是尽可能减少**
