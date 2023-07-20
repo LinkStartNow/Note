@@ -83,3 +83,26 @@ b = {3: 5}
 a.update(b)
 print(len(a))
 ```
+
+---
+
+## setdefault方法
+
+可以用来设置某个键对应值的默认值，可以用来计数
+
+如果没有该键值对而直接用的话就会报错
+
+```python
+import pprint
+count = {}
+str = '22332336348724'
+for x in str:
+    count.setdefault(x, 0)
+    count[x] += 1
+# for x in count.items():
+#     print(x)
+print(count)
+pprint.pprint(count)
+print(pprint.pformat(count))
+```
+
