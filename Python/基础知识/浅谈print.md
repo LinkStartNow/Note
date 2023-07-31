@@ -2,7 +2,7 @@
 
 ***详情还是可以直接看[大佬的博客](https://blog.csdn.net/sinat_28576553/article/details/81154912?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522166454023016782388065745%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=166454023016782388065745&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-2-81154912-null-null.142^v51^pc_rank_34_2,201^v3^control_2&utm_term=python%E7%9A%84print&spm=1018.2226.3001.4187)***
 `print(*objects, sep=' ', end='\n', file=sys.stdout)`
-这是参数列表，可见print是不限制输出的类型的，不管是啥都能输出
+这是参数列表，可见print是不限制输出的类型的，不管是啥都能输出，毕竟传入进去的全变成元组中的元素了
 ```python
 a, b, c = 1, 'abc', 'd'
 print(a, b, c, 'hello', '!')
@@ -23,14 +23,26 @@ print(a, b, c, 'hello', '!', sep='.', end='hello world!')
     b = 'yes'
     print('我%s了,%s'%(a, b))
     ```
-2. 最小子段宽度和精度
+    
+2. `f`创建格式化字符串
+
+    ```python
+    a = 123
+    b = '你'
+    
+    print(f'{b} 是 {a}') # 你 是 123
+    ```
+
+3. 最小子段宽度和精度
     在 ***格式控制符*** 中的%后用来设置输出的样式
     如`%x.yf`说明子段宽度为x，小数点后保留y位
     `print('%6.3f'%3.14)`
     其中的x和y也可以先用`*`占位，最后同样从元组中读出他俩的值，当然x和y也可以不填使用默认值
     `print('%*.*f'%(10, 10, 3.14))`
-3. 转换标志
+
+4. 转换标志
    不知道为啥这些转换标志好像 ***不能叠加使用***
+
     1. `-`表示左对齐（默认右对齐）
         也就是说有空格什么的填充字符是填充在右侧的
         `print('%-*.*f'%(10, 10, 3.14))`

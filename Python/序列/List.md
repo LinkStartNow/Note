@@ -72,7 +72,7 @@ print(a)
 
 ---
 ## index(v, [beg, [end]])
-返回v第一次出现的位置beg和end都是**选填**
+xxxxxxxxxx a = {1, 2, 3}b = {2, 4}print(a ^ b)print(a.symmetric_difference(b))python
 ```python
 a = [1, 2, 3, 5, 7, 3]
 print(a.index(3, 3))

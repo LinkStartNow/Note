@@ -18,7 +18,7 @@
     ```python
     from selenium import webdriver
     from time import sleep
-
+    
     # Edge浏览器
     driver = webdriver.Edge()
     driver.get('https://www.csdn.net/')
@@ -158,7 +158,7 @@ into.send_keys(Keys.ENTER)
     ```python
     from selenium import webdriver
     from time import sleep
-
+    
     # Edge浏览器
     driver = webdriver.Edge()
     driver.get('https://www.csdn.net/')
@@ -191,34 +191,34 @@ into.send_keys(Keys.ENTER)
     ```python
     # 获取当前页面url
     driver.current_url
-
+    
     # 获取当前html源码
     driver.page_source
-
+    
     # 获取当前页面标题
     driver.title
-
+    
     # 获取浏览器名称(chrome)
     driver.name
-
+    
     # 对页面进行截图，返回二进制数据
     driver.get_screenshot_as_png()
-
+    
     # 设置浏览器尺寸
     driver.get_window_size()
-
+    
     # 获取浏览器尺寸，位置
     driver.get_window_rect()
-
+    
     # 获取浏览器位置(左上角)
     driver.get_window_position()
-
+    
     # 设置浏览器尺寸
     driver.set_window_size(width=1000, height=600)
-
+    
     # 设置浏览器位置(左上角)
     driver.set_window_position(x=500, y=600)
-
+    
     # 设置浏览器的尺寸，位置
     driver.set_window_rect(x=200, y=400, width=1000, height=600)
     ```
