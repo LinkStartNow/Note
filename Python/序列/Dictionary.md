@@ -106,3 +106,28 @@ pprint.pprint(count)
 print(pprint.pformat(count))
 ```
 
+# 默认字典
+
+普通的字典如果直接使用没有定义的键则会报错
+
+但如果使用的是默认字典，则会返回默认值
+
+```python
+from collections import defaultdict
+
+d = defaultdict(int)
+
+print(d[3]) # 0
+```
+
+其他类型的值也有对应的默认字典
+
+```python
+from collections import defaultdict
+d_int = defaultdict(int)
+d_list = defaultdict(list)
+d_set = defaultdict(set)
+d_float = defaultdict(float)
+d_str = defaultdict(str)
+```
+

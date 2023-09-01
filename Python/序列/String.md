@@ -73,8 +73,7 @@ Bob''')
         print('zly {0[2]} {0[3]} {0[0]} {0[1]}'.format(a))
         ```
     - 数字格式化
-        - 百分比格式
-            `print('{:.2%}'.format(0.12345))`
+        - xxxxxxxxxx a = {1, 2, 3}b = {2, 4}print(a ^ b)print(a.symmetric_difference(b))python
         - 转进制
             ```python
             print('{:<20b}'.format(5)) # 左对齐二进制，长度为20

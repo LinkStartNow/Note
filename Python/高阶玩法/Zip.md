@@ -12,7 +12,7 @@ for x in s:
 ```
 
 ---
-## 逆操作
+## xxxxxxxxxx a, b, c = map(int, input().split())print(type(a), b, c)python
 也就是zip的还原，当然打包的时候就提前结束的是不能完全还原的
 ```python
 a = ['a', 'b', 'c', 'd']
