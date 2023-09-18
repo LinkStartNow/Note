@@ -117,3 +117,32 @@ class Solution:
         return max(yyds(0, n - 1), yyds(1, n))
 ```
 
+## 打家劫舍3
+
+[链接]([337. 打家劫舍 III - 力扣（LeetCode）](https://leetcode.cn/problems/house-robber-iii/description/?envType=daily-question&envId=2023-09-18))
+
+这里把所有的房子放在了一颗二叉树上，约束是父节点和子节点不能同时选
+
+于是我们只需要在树上DP就行了
+
+```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def rob(self, root: Optional[TreeNode]) -> int:
+        def yyds(node):
+            if node == None:
+                return 0, 0
+            if node.left == None and node.right == None:
+                return node.val, 0
+            tl = yyds(node.left)
+            tr = yyds(node.right)
+            return max(tl[0] + tr[0], tl[1] + tr[1] + node.val), tl[0] + tr[0]
+        return yyds(root)[0]
+
+```
+
