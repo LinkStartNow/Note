@@ -113,3 +113,114 @@ while pq.empty() != True:
 
 当然如果自己声明的类有了独特的`__lt__`方法后，也可以进行sort等排序操作
 
+# 双向队列
+
+`queue.Queue`主要为了线程间通信，而队列只是附带功能，而`collections.deque`才是真正的容器
+
+使用双向队列可以比`Queue`快很多
+
+实际上`Queue`的底层就是用`deque`实现的
+
+```python
+# Override these methods to implement other queue organizations
+# (e.g. stack or priority queue).
+# These will only be called with appropriate locks held
+
+# Initialize the queue representation
+def _init(self, maxsize):
+    self.queue = deque()
+```
+
+接下来，我们来讲讲如何使用这个双向队列
+
+## 创建
+
+需要导入`collections`模块
+
+```python
+import collections
+
+q = collections.deque() 
+```
+
+当然，他的初始化比较高级，可以直接用一个可迭代对象进行初始化
+
+```python
+import collections
+
+q = collections.deque(range(10))
+q2 = collections.deque([x for x in range(10) if x % 2])
+
+print(q)             # deque([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])     
+print(q2)            # deque([1, 3, 5, 7, 9])  
+```
+
+## 入队
+
+双向队列顾名思义，两头都可以用，而且都是既能出又能入的
+
+```python
+import collections
+
+q = collections.deque() 
+
+q.append(2)
+q.append(4)
+q.append(3)
+print(q)               # deque([2, 4, 3])
+
+q.appendleft(233)
+q.appendleft(666)
+print(q)               # deque([666, 233, 2, 4, 3])
+```
+
+当然，还能通过`extend`直接添加可迭代对象，同样支持两端添加
+
+```python
+import collections
+
+q = collections.deque() 
+
+q.append(2)
+q.append(4)
+q.append(3)
+print(q)               # deque([2, 4, 3])
+
+q.appendleft(233)
+q.appendleft(666)
+print(q)               # deque([666, 233, 2, 4, 3])
+
+q.extend(range(5))
+print(q)               # deque([666, 233, 2, 4, 3, 0, 1, 2, 3, 4])
+
+q.extendleft(range(3))
+print(q)               # deque([2, 1, 0, 666, 233, 2, 4, 3, 0, 1, 2, 3, 4])
+```
+
+## 插入
+
+这个其实有点离谱了，但是你没看错，它真的能插入
+
+盲猜一手，这个就是套了个壳的list吧
+
+```python
+print(q)               # deque([2, 1, 0, 666, 233, 2, 4, 3, 0, 1, 2, 3, 4])
+
+q.insert(2, 123)
+print(q)               # deque([2, 1, 123, 0, 666, 233, 2, 4, 3, 0, 1, 2, 3, 4])
+```
+
+## 弹出元素
+
+直接用`pop`
+
+```python
+import collections
+
+q = collections.deque(range(10))
+
+print(q.pop())         # 9          
+print(q.popleft())     # 0          
+print(q)               # deque([1, 2, 3, 4, 5, 6, 7, 8]) 
+```
+
