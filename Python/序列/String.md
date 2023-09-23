@@ -65,6 +65,21 @@ Bob''')
     s = '%s的年龄是%d'%(name, a)
     print(s)
     ```
+    
+    具体格式为`%[-][+][0][m][.n]格式字符%x`
+    
+    我们来具体介绍一下这些代表着什么：
+    
+    - `%`：格式标志，表示格式开始
+    - `-`：指定左对齐输出
+    - `+`：对正数加正好
+    - `0`：指定空位填0
+    - `m`：最小宽度
+    - `.n`：指定精度
+    - `格式字符`：指定类型
+    - `%`：格式运算符
+    - `x`：待转换的表达式
+    
 2. `format()`方法
     一般格式为：`{<索引>:<填充字符><对齐方式><宽度.精度><格式>}`
     - 设置参数
@@ -81,6 +96,7 @@ Bob''')
             print('{:^20x}'.format(666)) # 居中对齐十六进制
             print('{:^20o}'.format(233)) ## 居中对齐八进制
             ```
+    
 3. `f'str'`
     可以在字符串内部直接使用变量进行格式化
     ```python
@@ -280,6 +296,18 @@ pyperclip.copy('Hello world!') # 复制Hello world到剪切板
 print(pyperclip.paste())       # 从剪切板粘贴
 ```
 
+### 判断是否是子串
+
+可以通过`in`进行判断
+
+```python
+s = 'abc'
+print('bc' in s)     # True           
+print('ac' in s)     # False           
+print('abc' in s)    # True         
+print('c' in s)      # True        
+```
+
 ## eval()
 
 实现字符串和list、dict等序列之间的转换
@@ -293,6 +321,7 @@ print(a)
 
 ---
 ## center(width, fillchar)
+
 返回一个宽度为width居中的字符串，fillchar为填充字符默认为空格
 ```python
 a = 'a'
@@ -302,6 +331,7 @@ print(a)
 
 ---
 ## count(str, beg=0, end=len(string))
+
 返回str在字符串string中出现的次数，beg和end有初始值且可以自己改变
 ```python
 a = 'aaaaa'
