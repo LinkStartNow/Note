@@ -146,3 +146,71 @@ class Solution:
 
 ```
 
+# 例题——买股票的最佳时机
+
+\> Problem: [188. 买卖股票的最佳时机 IV](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-iv/description/)
+
+## 思路
+
+> 我的思路就是用三维的DP来维护状态，第一维用来保存考虑到第几天，第二维用来保存手头是否有股票，第三维用来保存至今已经完成多少次交易了
+
+## 优化
+
+> 又考虑到当前的状态只会受前一天的状态影响，于是第一维可以被优化掉
+
+## Code
+
+```python
+class Solution:
+    def maxProfit(self, k: int, prices: List[int]) -> int:
+        n = len(prices)
+        if n == 1:
+            return 0
+        buy = [-inf] * (k + 1)
+        sell = [-inf] * (k + 1)
+        buy[0] = -prices[0]
+        sell[0] = 0
+        for i in range(1, n):
+            buy[0] = max(buy[0], -prices[i])
+            for j in range(1, k + 1):
+                buy[j], sell[j] = max(buy[j], sell[j] - prices[i]), max(sell[j], buy[j - 1] + prices[i])
+        return  max(sell)
+```
+
+## 变量说明
+
+> sell[i]的意思是，当进行了当前的卖出操作后，已经完成了多少次交易
+>
+> buy[i]也是如此
+
+## 细节
+
+> 我们在循环开始前要先进行初始化，最好先把第一天的状态处理掉
+>
+> 我们都知道在第一天的时候，无论如何操作都不可能有交易（一买一卖）产生，于是那些大于0次交易的变量全部初始化为最小值，表示这些情况毫无意义
+
+## 另一种思路
+
+### 说明
+
+> 其实这一种思路和前面大差不差，只是考虑到没有冷却期，于是可以在当天疯狂的买进卖出同一只股票，在收益不变的情况下改变最终交易次数
+>
+> 这样可以把最终的答案固定在最多交易次数上，最后就不用再找一遍最大值了
+
+### Code
+
+```python
+class Solution:
+    def maxProfit(self, k: int, prices: List[int]) -> int:
+        n = len(prices)
+        if n == 1:
+            return 0
+        buy = [-prices[0]] * (k + 1)
+        sell = [0] * (k + 1)
+        for i in range(1, n):
+            buy[0] = max(buy[0], -prices[i])
+            for j in range(1, k + 1):
+                buy[j], sell[j] = max(buy[j], sell[j] - prices[i]), max(sell[j], buy[j - 1] + prices[i])
+        return  sell[k]
+```
+
