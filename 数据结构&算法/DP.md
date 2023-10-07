@@ -148,7 +148,7 @@ class Solution:
 
 # 例题——买股票的最佳时机
 
-\> Problem: [188. 买卖股票的最佳时机 IV](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-iv/description/)
+> Problem: [188. 买卖股票的最佳时机 IV](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-iv/description/)
 
 ## 思路
 
