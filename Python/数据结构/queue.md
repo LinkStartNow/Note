@@ -224,3 +224,21 @@ print(q.popleft())     # 0
 print(q)               # deque([1, 2, 3, 4, 5, 6, 7, 8]) 
 ```
 
+## 查看元素
+
+> 双端队列只能在查看两端的元素
+>
+> 这里比较特殊，可以通过下标的方式在不弹出的情况下查看两端的元素
+
+```python
+import collections
+
+q = collections.deque()
+
+q.append(233)
+q.append(666)
+
+print(q[-1])    # 666     
+print(q[0])     # 233    
+```
+
