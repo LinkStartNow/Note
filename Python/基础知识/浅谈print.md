@@ -199,3 +199,29 @@ Today is Thursday and it is rainy
 '''
 ```
 
+为了看懂上面的解包与zip的套用，我们拆成了下面代码帮助理解
+
+```python
+weather = [('Monday', 'rainy'), 
+            ('Tuesday', 'sunny'),
+            ('Wednesday', 'sunny'),
+            ('Thursday', 'rainy'),
+            ]
+
+formatter = 'Today is {} and it is {}'.format
+
+print(*weather)              # ('Monday', 'rainy') ('Tuesday', 'sunny') ('Wednesday', 'sunny') ('Thursday', 'rainy')      
+print(list(zip(*weather)))   # [('Monday', 'Tuesday', 'Wednesday', 'Thursday'), ('rainy', 'sunny', 'sunny', 'rainy')]        
+print(*(zip(*weather)))      # ('Monday', 'Tuesday', 'Wednesday', 'Thursday') ('rainy', 'sunny', 'sunny', 'rainy')    
+
+for item in map(formatter, ('Monday', 'Tuesday', 'Wednesday', 'Thursday'), ('rainy', 'sunny', 'sunny', 'rainy')):
+    print(item)
+
+'''
+Today is Monday and it is rainy
+Today is Tuesday and it is sunny
+Today is Wednesday and it is sunny
+Today is Thursday and it is rainy
+'''
+```
+
