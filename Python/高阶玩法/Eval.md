@@ -7,6 +7,24 @@ locals:同上
 ***定义后两个参数时一定要用字典不然会出错***
 无后两个参数时表达式中的变量会从全局变量中找，限定变量范围后则会从给出的范围中找。当两个参数的字典中都存在需要的变量时则 ***locals优先***
 
+```python
+''' eval函数： 可以执行一个字符串内的操作 '''
+
+s = 'print(\'hello\')'
+eval(s)
+
+a = 1
+b = 3
+c = eval('a + b')
+print(c)
+
+d = dict(a = 10, b = 20)
+e = eval('a + b')
+print(e)
+f = eval('a + b', d) # 后面传入d对象， 表示访问的是d中的a和b
+print(f)
+```
+
 ---
 ## expression示例
 ```python

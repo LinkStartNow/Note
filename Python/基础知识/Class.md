@@ -1,9 +1,10 @@
 # 类相关
 
-个人的某些理解：貌似在python中属性和方法的界限十分模糊，几乎可以看成是一样的
+> 个人的某些理解：貌似在python中属性和方法的界限十分模糊，几乎可以看成是一样的
 
 ---
 ## 构造函数
+
 ```python
 def __init__(self, name, age): # self必须为第一个参数（也可以不叫self）
         ''' 构造函数， 类的属性由此创建 '''
@@ -67,8 +68,8 @@ print(isinstance(a, man))
 ---
 ## 类属性
 所有该类的变量包括这个类对象都共用这一个变量，于是可以用来记录类的属性~~马德这不是废话，不然怎么叫类属性~~
-***调用的时候最好用类名调用***
-类内的方法中记得最好不要使用self.x与类属性重名不然会很尴尬
+***调用的时候用类名调用，不然容易出bug***
+
 ```python
 ''' 类属性 '''
 class Student:
@@ -84,6 +85,64 @@ b = a('zly')
 print('一共创建了{0}个对象'.format(Student.count))
 c = a('hhh')
 print('一共创建了{0}个对象'.format(Student.count))
+```
+
+---
+
+### 调用
+
+> 调用的时候尽量也是用类名去调用类属性，不然会创建新的属性，也不会变动原来的类属性
+
+```python
+class yyds:
+    add = 'beijing'
+
+a = yyds()
+b = yyds()
+print(yyds.add)    # beijing
+print(a.add)       # beijing    
+print(b.add)       # beijing 
+
+yyds.add = 'shanghai'
+print(yyds.add)       # shanghai  
+print(a.add)          # shanghai 
+print(b.add)          # shanghai
+
+a.add = 'hangzhou'
+print(yyds.add)      # shanghai   
+print(a.add)         # hangzhou   
+print(b.add)         # shanghai  
+```
+
+> 就算是+=这种看似可以的操作，也不行
+
+```python
+class yyds:
+    add = 1
+
+a = yyds()
+yyds.add += 1
+print(a.add)       # 2     
+print(yyds.add)    # 2 
+
+a.add += 1
+print(a.add)       # 2     
+print(yyds.add)    # 1     
+```
+
+> 实际上，在改变的时候，已经生成新对象了
+
+```python
+class yyds:
+    add = 1
+
+a = yyds()
+print(id(a.add))       # 2049369440496
+print(id(yyds.add))    # 2049369440496
+
+a.add = 233
+print(id(a.add))       # 2049369447920      
+print(id(yyds.add))    # 2049369440496
 ```
 
 ---
@@ -261,3 +320,156 @@ del c
 print('程序结束')
 print(a.num)
 ```
+
+---
+
+# 继承
+
+> Python里的继承只需要直接在类名后加小括号就行了
+>
+> 值得注意的是，Python全都是默认public
+>
+> 子类可以直接调用父类的公有属性与方法
+
+```python
+class Father:
+    def __init__(self) -> None:
+        self.a = 233
+    
+    def yyds(self):
+        print('yyds')
+
+class Son(Father):
+    pass
+
+f = Father()
+s = Son()
+s.yyds()
+```
+
+---
+
+## 函数重载
+
+> Python并不支持函数重载，但是函数会覆盖，也就是说，后定义会覆盖之前的定义
+
+```python
+''' 后定义的无参构造成功了，最终使用的是无参的构造函数，有参的被覆盖了 '''
+class Father:
+    def __init__(self, x) -> None:
+        self.a = 233
+    
+    def __init__(self) -> None:
+        self.a = 233
+    
+    def yyds(self):
+        print('yyds')
+
+s = Father()
+print(s.a)
+```
+
+```python
+''' 
+    后定义的有参构造成功了，最终使用的是有参的构造函数，无参的被覆盖了 
+    于是最终报错了
+'''
+class Father:
+    def __init__(self) -> None:
+        self.a = 233
+    
+    def __init__(self, x) -> None:
+        self.a = 233
+    
+    def yyds(self):
+        print('yyds')
+
+s = Father()
+print(s.a)
+'''
+    s = Father()
+TypeError: Father.__init__() missing 1 required positional argument: 'x'
+'''
+```
+
+---
+
+## 构造方法
+
+> 在子类不写构造函数的情况下，解释器会自动调用父类的无参构造函数
+
+```python
+class Father:
+    def __init__(self) -> None:
+        self.a = 233
+    
+    def yyds(self):
+        print('yyds')
+
+class Son(Father):
+    # def __init__(self) -> None:
+    #     # super().__init__()
+    #     pass
+    pass
+
+s = Son()
+print(s.a)   # 233
+```
+
+调用的过程大致为：
+
+```python
+def __init__(self) -> None:
+    super().__init__()
+```
+
+> 但如果父类手写了有参的构造函数，父类将不再拥有无参构造函数，也就是这时解释器不会自动调用了
+
+```python
+class Father:
+    # def __init__(self) -> None:
+    #     self.a = 233
+
+    def __init__(self, x) -> None:
+        self.a = 233
+    
+    def yyds(self):
+        print('yyds')
+
+class Son(Father):
+    # def __init__(self) -> None:
+    #     # super().__init__()
+    #     pass
+    pass
+
+s = Son()
+print(s.a)
+'''
+   s = Son()
+TypeError: Father.__init__() missing 1 required positional argument: 'x'
+'''
+```
+
+> 此时，我们如果想要调用父类的构造函数，首先得写自己的构造函数，然后在内部手动调用父类的构造函数
+
+```python
+class Father:
+    def __init__(self, x) -> None:
+        self.a = 233
+    
+    # def __init__(self) -> None:
+    #     self.a = 233
+    
+    def yyds(self):
+        print('yyds')
+
+class Son(Father):
+    def __init__(self) -> None:
+        super().__init__(666)  # 传入了参数x = 666，成功调用有参构造函数
+        pass
+    pass
+
+s = Son()
+print(s.a)
+```
+
