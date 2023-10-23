@@ -296,6 +296,8 @@ hi
 '''
 ```
 
+---
+
 ### readlines读取
 
 `readlines`方法可以读取每一行的内容，分开来存进列表
@@ -311,6 +313,30 @@ print(s)
 
 # ["f = open('hello.py')\n", '\n', 's = f.readlines()\n', '\n', 'print(s)\n', '\n', '# for x in s:\n', '#     print(x)']
 ```
+
+---
+
+### 读取中文
+
+> Python在读取中文文件时，需要指定编码，一般我们都采用utf-8
+
+```python
+with open('data.txt', 'r', encoding='utf-8') as f:
+    print(f.read())    
+```
+
+> 值得注意的一点是，在utf8中，中文占两个字节，英文占一个字节，而seek的偏移的单位是字节，read的读取单位是字符
+>
+> 于是如果偏移的是奇数位再读就会出错
+
+```python
+with open('data.txt', 'r', encoding='utf-8') as f:
+    f.seek(1)
+    print(f.read())    
+    # UnicodeDecodeError: 'utf-8' codec can't decode byte 0xbd in position 0: invalid start byte
+```
+
+---
 
 ## 写入文件
 
