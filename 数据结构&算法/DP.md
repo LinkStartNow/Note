@@ -214,3 +214,76 @@ class Solution:
         return  sell[k]
 ```
 
+---
+
+# 例题——抛骰子
+
+> Problem：[1155. 掷骰子等于目标和的方法数]([1155. 掷骰子等于目标和的方法数 - 力扣（LeetCode）](https://leetcode.cn/problems/number-of-dice-rolls-with-target-sum/description/?envType=daily-question&envId=2023-10-24))
+
+## 思路
+
+> 很明显这就是一道简单的DP问题
+>
+> 我们只需要建立一个二维数组记录两个状态，一个是目前考虑多少个骰子，第二维是总和加起来为多大即可
+>
+> 然后每次遍历一下投的大小
+>
+> `for t in range(1, k + 1): dp[i][sum] = dp[i  - 1][sum - t]`
+>
+> **注意：dp\[0][0]必须为1，其意义是0个骰子的时候有1种情况相加为0（之后肯定是没有相加为0的机会了）不然所有都是0根本就增加不下去了哈哈哈**
+
+## Code
+
+```python
+class Solution:
+    def numRollsToTarget(self, n: int, k: int, target: int) -> int:
+        dp = [[0] * (target + 1) for _ in range(n + 1)]
+        dp[0][0] = 1
+        m = 10 ** 9 + 7
+        for i in range(1, n + 1):
+            for z in range(i, target + 1):
+                for j in range(1, min(k + 1, z + 1)):
+                    dp[i][z] += dp[i - 1][z - j]
+                    dp[i][z] %= m
+        return dp[n][target] % m
+
+s = Solution()
+n, k, target = 1, 6, 3
+print(s.numRollsToTarget(n, k, target))
+```
+
+---
+
+## 优化
+
+> 像这种当前状态只会受前一状态影响的，我们不需要记录所有状态，只需要开两个一维然后交替使用即可，这样能省下大量的内存
+>
+> 当然我们这里直接就追求更极致的版本了，由于很明显每次dp的取值dp\[i][z] += dp\[i - 1][z - j] ，所依赖的第二维下标严格小于当前需要改变的下标位置
+>
+> 于是，我们如果从后往前处理就可以保证每次在处理的时候依赖的都是上一层的元素，这样就能使用一维数组就解决问题了
+
+### Code
+
+```python
+class Solution:
+    def numRollsToTarget(self, n: int, k: int, target: int) -> int:
+        mod = 10**9 + 7
+        f = [1] + [0] * target
+        for i in range(1, n + 1):
+            for j in range(target, -1, -1):
+                f[j] = 0
+                for x in range(1, k + 1):
+                    if j - x >= 0:
+                        f[j] = (f[j] + f[j - x]) % mod
+        return f[target]
+```
+
+---
+
+### 易错点
+
+> 实际上，我一上来就拿一维写的，但是疯狂出错，找了半天bug才找到问题所在。
+>
+> 首先，每一轮处理的时候要先将dp[j] = 0，清零当前的元素，因为当前的元素是上一层的，如果直接开始累加的话，那么答案肯定就偏大了
+>
+> 再者，之前为了省循环次数，我在遍历j的时候直接遍历到了此时理论上的最小结果，因为继续遍历下去数组就会越界，也就没有意义了。这就犯了一个严重的错误，遍历的躺数确实节约了，在二维分离开的情况下很合理肯定没问题。然鹅，这是一维！！！节约了空间，在数据的处理上就需要更加的谨慎。我们每一维的元素都是通过倒序共用的，前面的值直接被跳过了，也许那些值并不会在当轮被更新，但是，会在之后被当做依赖累加起来。所以我们每处理完多一个骰子，就需要保证当前的每个数据都是对应目前数目的骰子的，那些每遍历到的元素是属于上一层的，在当前层理论上肯定是0，于是我们不能偷懒，需要遍历到底全部清0！
