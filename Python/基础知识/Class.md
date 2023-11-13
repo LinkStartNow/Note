@@ -473,3 +473,91 @@ s = Son()
 print(s.a)
 ```
 
+## 调用构造方法
+
+> 子类调用父类的构造方法有两种方式：
+>
+> 1. 将父类当成父类来处理
+> 2. 将父类当成普通类处理
+
+---
+
+### 将父类当成父类
+
+```python
+class Father:
+    def __init__(self) -> None:
+        self.a = 233
+
+class Son(Father):
+    def __init__(self) -> None:
+        super().__init__()
+
+s = Son()
+print(s.a)
+```
+
+---
+
+### 将父类当成普通类
+
+```python
+class Father:
+    def __init__(self) -> None:
+        self.a = 233
+
+class Son(Father):
+    def __init__(self) -> None:
+        Father.__init__(self)
+
+s = Son()
+print(s.a)
+```
+
+---
+
+#### 拓展
+
+> 由此可以看出，我们其实可以调用其他类的构造函数来初始化自身
+
+```python
+class Father:
+    def __init__(self) -> None:
+        self.a = 233
+
+class yyds:
+    def __init__(self) -> None:
+        self.ssr = 567
+
+class Son(Father):
+    def __init__(self) -> None:
+        yyds.__init__(self)
+
+s = Son()
+print(s.ssr)  # 567
+print(s.a)    # AttributeError: 'Son' object has no attribute 'a'
+```
+
+**锐评：看来不论有没有血缘关系都没用，继承啥的都是浮云，构造方法调用谁的，谁才是真“父亲”**
+
+**注意：判断起来父亲还是Father哈，别搞混了，虽然他啥也没留给你哈哈哈哈**
+
+```python
+class Father:
+    def __init__(self) -> None:
+        self.a = 233
+
+class yyds:
+    def __init__(self) -> None:
+        self.ssr = 567
+
+class Son(Father):
+    def __init__(self) -> None:
+        yyds.__init__(self)
+
+s = Son()
+print(isinstance(s, Son))       # True     
+print(isinstance(s, yyds))      # False        
+print(isinstance(s, Father))    # True          
+```
+

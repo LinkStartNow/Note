@@ -242,3 +242,14 @@ print(q[-1])    # 666
 print(q[0])     # 233    
 ```
 
+> 当然在迫不得已的情况下，这个双向队列甚至可以当做list用，可以通过下标直接查找中间的元素，但是能别用还是别用，时间消耗应该挺高的
+
+```python
+from collections import deque
+q = deque()
+q.append(1)
+q.append(2)
+q.append(3)
+print(q[1])  # 2
+```
+

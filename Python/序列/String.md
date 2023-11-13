@@ -39,7 +39,7 @@ print('%s'%[1, 2, 3])      # [1, 2, 3]
 
 ***具体[链接](https://blog.csdn.net/aaaaaaze/article/details/123020600?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522166470495516782395315081%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=166470495516782395315081&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-2-123020600-null-null.142^v51^pc_rank_34_2,201^v3^control_2&utm_term=python%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2&spm=1018.2226.3001.4187)***
 
-> xxxxxxxxxx a = {1, 2, 3}b = {2, 4}print(a ^ b)print(a.symmetric_difference(b))python
+>  a = {1, 2, 3}b = {2, 4}print(a ^ b)print(a.symmetric_difference(b))python
 
 1. 使用`%`占位符
 
