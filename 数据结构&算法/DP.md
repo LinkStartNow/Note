@@ -287,3 +287,72 @@ class Solution:
 > 首先，每一轮处理的时候要先将dp[j] = 0，清零当前的元素，因为当前的元素是上一层的，如果直接开始累加的话，那么答案肯定就偏大了
 >
 > 再者，之前为了省循环次数，我在遍历j的时候直接遍历到了此时理论上的最小结果，因为继续遍历下去数组就会越界，也就没有意义了。这就犯了一个严重的错误，遍历的躺数确实节约了，在二维分离开的情况下很合理肯定没问题。然鹅，这是一维！！！节约了空间，在数据的处理上就需要更加的谨慎。我们每一维的元素都是通过倒序共用的，前面的值直接被跳过了，也许那些值并不会在当轮被更新，但是，会在之后被当做依赖累加起来。所以我们每处理完多一个骰子，就需要保证当前的每个数据都是对应目前数目的骰子的，那些每遍历到的元素是属于上一层的，在当前层理论上肯定是0，于是我们不能偷懒，需要遍历到底全部清0！
+
+---
+
+# 例题——最小化旅行的价格总和
+
+> Problem:[2646. 最小化旅行的价格总和](https://leetcode.cn/problems/minimize-the-total-price-of-the-trips/description/?envType=daily-question&envId=2023-12-06)
+
+## 说明
+
+> 这题跟打家劫舍3十分的像，也算是一道树上dp的题目，相邻的节点不能同时选择，也就和打家劫舍3的条件相同了
+>
+> 我们可以先对每一段旅行进行dfs遍历找出每一段旅行必须经过的节点记录下来，他们就是最终需要经过的节点
+>
+> 然后我们一边树上dp一边处理这些节点是否降低值即可
+
+## Code
+
+```c++
+class Solution {
+public:
+    int minimumTotalPrice(int n, vector<vector<int>>& edges, vector<int>& price, vector<vector<int>>& trips) {
+        vector<int> e[n];
+        for (vector<int>& x: edges) {
+            e[x[0]].push_back(x[1]);
+            e[x[1]].push_back(x[0]);
+        }
+
+        vector<int> cnt(n);
+
+        function<bool(int, int, int)> dfs = [&] (int u, int f, int des) {
+            if (des == u) {
+                cnt[u]++;
+                return true;
+            }
+            for (int v: e[u]) {
+                if (v == f) continue;
+                if (dfs(v, u, des)) {
+                    cnt[u]++;
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        for (vector<int>& x: trips) dfs(x[0], x[0], x[1]);
+
+        for (int i = 0; i < n; ++i) {
+            cout << i << ' ' << cnt[i] << endl;
+        }
+
+        function<pair<int, int>(int, int)> dp = [&] (int u, int f) {
+            pair<int, int> res = {
+                cnt[u] * price[u],
+                cnt[u] * price[u] >> 1
+            };
+            for (int v: e[u]) {
+                if (v == f) continue;
+                auto [x, y] = dp(v, u);
+                res.first += min(x, y);
+                res.second += x;
+            }
+            return res;
+        };
+        auto [x, y] = dp(0, 0);
+        return min(x, y);
+    }
+};
+```
+
