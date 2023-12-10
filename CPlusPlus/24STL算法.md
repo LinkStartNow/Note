@@ -75,6 +75,8 @@ cout << ::equal(vec2.begin(), --vec2.end(), vec3.begin()) << endl; // 0
 
 ## 查找
 
+### find
+
 可以使用`find`方法
 
 三个参数，前两个依旧是范围，最好一个是值，查找失败则会返回范围结束也就是参数2（不一定是end哦！）
@@ -92,6 +94,226 @@ else {
     cout << " 找不到" << endl;
 }
 ```
+
+---
+
+### lower_bound
+
+> 该函数有三个参数，前两个是搜索范围，左闭右开
+>
+> 最后一个可以有两种选择：
+>
+> 1. 基础版：传递值，最终查询出第一个大于等于该值的迭代器
+> 2. 进阶版：再多传递一个cmp规则，返回第一个不符合该规则的迭代器
+
+```c++
+//查找[first, last)区域中第一个大于 val 的元素。
+ForwardIterator upper_bound (ForwardIterator first, ForwardIterator last,
+                             const T& val);
+//查找[first, last)区域中第一个不符合 comp 规则的元素
+ForwardIterator upper_bound (ForwardIterator first, ForwardIterator last,
+                             const T& val, Compare comp);
+```
+
+> 上面用的都是迭代器，我们在用vector时一般更喜欢下标，于是我们还需要减去begin
+
+---
+
+#### 直接传值
+
+```c++
+#include <iostream>
+#include <vector>
+#include <functional>
+#include <algorithm>
+
+using namespace std;
+
+int main()
+{
+    vector<int> v = {2, 3, 9, 0, 666, 13};
+    sort(v.begin(), v.end());
+    cout << "排序后..." << endl;
+    for (int x: v) cout << x << ' ';
+    cout << endl;
+    int t = upper_bound(v.begin(), v.end(), 3) - v.begin();
+    cout << v[t] << endl;
+}
+/*
+排序后...
+0 2 3 9 13 666
+9
+*/
+```
+
+---
+
+#### 自定义比较方法
+
+> 要求有两个参数，**第二个参数**就是传入的比较值
+>
+> **注意：一定要传入小于或小于等于比较值的比较方法**
+
+##### Code
+
+```c++
+#include <iostream>
+#include <vector>
+#include <functional>
+#include <algorithm>
+
+using namespace std;
+
+int main()
+{
+    vector<int> v = {2, 3, 9, 0, 666, 13};
+    sort(v.begin(), v.end());
+    cout << "排序后..." << endl;
+    for (int x: v) cout << x << ' ';
+    cout << endl;
+    int t = lower_bound(v.begin(), v.end(), 3,
+                        [&] (int x, int y) {
+                            return x <= y;
+                        }) - v.begin();
+    cout << v[t] << endl;
+}
+/*
+排序后...
+0 2 3 9 13 666
+9
+*/
+```
+
+> 上述的比较函数实际上可以这样翻译：
+>
+> x为遍历到的vector中的元素，y为传入的比较值3（lower_bound的第三个参数）
+>
+> 当遍历到不满足x < 3时就会返回，也就是遍历到第一个x > 3
+>
+> 于是最后返回了9
+
+----
+
+##### Code1
+
+```c++
+#include <iostream>
+#include <vector>
+#include <functional>
+#include <algorithm>
+
+using namespace std;
+
+int main()
+{
+    vector<int> v = {2, 3, 9, 0, 666, 13};
+    sort(v.begin(), v.end());
+    cout << "排序后..." << endl;
+    for (int x: v) cout << x << ' ';
+    cout << endl;
+    int t = lower_bound(v.begin(), v.end(), 9,
+                        [&] (int x, int y) {
+                            return x < y;
+                        }) - v.begin();
+    cout << v[t] << endl;
+}
+/*
+排序后...
+0 2 3 9 13 666
+9
+*/
+```
+
+> 上述代码也是相同的分析，我们找到第一个不满足比较关系的元素，也就是第一个大于等于9的元素
+>
+> 最终返回了9
+
+---
+
+### upper_bound
+
+> 与lower_bound相同，这个函数也有两种调用方式
+
+---
+
+#### 直接传值
+
+> 返回第一个大于给定值的迭代器
+
+```c++
+#include <iostream>
+#include <vector>
+#include <functional>
+#include <algorithm>
+
+using namespace std;
+
+int main()
+{
+    vector<int> v = {2, 3, 9, 0, 666, 13};
+    sort(v.begin(), v.end());
+    cout << "排序后..." << endl;
+    for (int x: v) cout << x << ' ';
+    cout << endl;
+    int t = upper_bound(v.begin(), v.end(), 9) - v.begin();
+    cout << v[t] << endl;
+}
+/*
+排序后...
+0 2 3 9 13 666
+13
+*/
+```
+
+---
+
+#### 自定义比较方法
+
+> 给定值会被当做**第一个参数**，而且会返回第一个满足比较方法的结果（这两点完全就和lower反着来了）
+>
+> **注意：一定要传入大于等于或大于比较值的方法**
+
+---
+
+##### Code
+
+```c++
+#include <iostream>
+#include <vector>
+#include <functional>
+#include <algorithm>
+
+using namespace std;
+
+int main()
+{
+    vector<int> v = {2, 3, 9, 0, 666, 13};
+    sort(v.begin(), v.end());
+    cout << "排序后..." << endl;
+    for (int x: v) cout << x << ' ';
+    cout << endl;
+    int t = upper_bound(v.begin(), v.end(), 9,
+                        [&] (int x, int y) {
+                            return x < y;
+                        }) - v.begin();
+    cout << v[t] << endl;
+}
+/*
+排序后...
+0 2 3 9 13 666
+13
+*/
+```
+
+---
+
+#### 记忆技巧
+
+> 固定让第一参数（x）放左边，第二参数（y）放在右边
+>
+> 如果原本是从小到大排序的，则用小于或小于等于
+>
+> 如果是从大到小的排序，则用大于或大于等于
 
 ---
 
