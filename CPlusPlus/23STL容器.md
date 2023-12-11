@@ -1507,3 +1507,55 @@ int main()
 }
 ```
 
+---
+
+## tuple
+
+> 类属于Python中的元组，但是内部的值是可以修改的，实际上就是pair的扩充
+>
+> 看起来就类似于一个结构体，毕竟功能也差不多，还是很好用哒！
+
+```c++
+#include <iostream>
+#include <tuple>
+
+using namespace std;
+
+int main()
+{
+    tuple<int, double, char> t {1, 3.14, 'a'};
+
+    get<1> (t) = 1.23;
+
+    cout << get<0> (t) << endl;    // 1      
+    cout << get<1> (t) << endl;    // 1.23
+    cout << get<2> (t) << endl;    // a
+}
+```
+
+---
+
+### 修改
+
+> 当使用变量来创建或赋值的时候，实际上只是简单的值传递，他俩还是独立的，并不会绑定
+
+```c++
+#include <iostream>
+#include <tuple>
+
+using namespace std;
+
+int main()
+{
+    tuple<int, double, char> t {1, 3.14, 'a'};
+
+    int a = 3;
+
+    get<0> (t) = a;
+    cout << get<0> (t) << endl;  // 3
+
+    a = 666;
+    cout << get<0> (t) << endl;  // 3
+}
+```
+
