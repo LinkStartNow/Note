@@ -90,3 +90,117 @@ window.show()
 
 **注意：如果还有其他的小组件是放在这个主窗口上的，那么需要在他们都放置完毕后，再调用`window.show()`，这样可以一起显示，那些小组件就不用另外使用`show`了**
 
+---
+
+### Code
+
+> 随后我们将他们封装成类，方便调用
+
+```python
+from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton,  QPlainTextEdit
+
+class stats:
+    def __init__(self) -> None:
+        self.window = QMainWindow()
+        self.window.resize(500, 400)
+        self.window.move(300, 310)
+        self.window.setWindowTitle('薪资统计')
+
+        self.textEdit = QPlainTextEdit(self.window)
+        self.textEdit.setPlaceholderText("请输入薪资表")
+        self.textEdit.move(10,25)
+        self.textEdit.resize(300,350)
+
+        self.button = QPushButton('统计', self.window)
+        self.button.move(380,80)
+
+app = QApplication([])
+
+ui = stats()
+ui.window.show()
+
+app.exec_()
+```
+
+---
+
+### 信号与槽
+
+> 其实就是将事件与处理函数进行绑定，具体可以去看之前的qt知识
+
+---
+
+```python
+def yyds():
+    info = textEdit.toPlainText()
+    print(info)
+
+button = QPushButton('统计', window)
+button.move(380,80)
+button.clicked.connect(yyds)
+```
+
+> 将按钮的点击事件与yyds函数绑定
+
+---
+
+## Qt Designer
+
+> 这可是一个可视化设计界面的神奇，我们可以通过这个软件然后拖动就能调整大小啊，布局什么的
+
+---
+
+### 入口
+
+> 我们先进入PySide2的文件夹下找到该程序打开就行啦
+>
+> `C:\Users\MAX\AppData\Local\Programs\Python\Python310\Lib\site-packages\PySide2`
+>
+> 找到`designer.exe`打开即可
+
+---
+
+### 使用
+
+#### 开始
+
+> 我们就直接从0开始，选择创建一个widget，这是个完全空的窗口，然后点击创建即可
+
+---
+
+#### 布置
+
+> 具体内部的布置就随需求放置即可
+>
+> 左边栏有我们将用到的那些常用组件，我们在其中找到然后拖入即可
+
+---
+
+#### 保存
+
+> 在布局完后，我们可以进行保存，获得ui文件，然后通过Python相关的调用即可
+
+---
+
+### Python调用
+
+> 我们先导入，加载该文件，然后直接就可以用了，里面的窗口等都通过加载对象来调用即可
+
+```python
+from PySide2.QtWidgets import QApplication
+from PySide2.QtUiTools import QUiLoader
+
+class stats:
+    def __init__(self) -> None:
+        # 导入ui文件
+        self.ui = QUiLoader().load('tst.ui')
+
+app = QApplication([])
+
+ssr = stats()
+ssr.ui.show()
+app.exec_()
+```
+
+
+
