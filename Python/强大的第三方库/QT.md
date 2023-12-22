@@ -42,7 +42,7 @@ pip install pyside2
 
 ---
 
-# 正文开始
+# 基础介绍
 
 ## 基础结构
 
@@ -202,5 +202,206 @@ ssr.ui.show()
 app.exec_()
 ```
 
+---
 
+### 关于show
+
+> 我们都知道，设置好父子关系，最终只需要父窗口调用show，这样所有的那些组件也都会显示了，但是当我们用动态ui文件生成加载对象后不知道谁是父窗口了咋办
+>
+> 不用慌，其实只需要让这个加载对象调用`show`方法即可
+
+```python
+from PySide2.QtWidgets import QApplication, QWidget
+from PySide2.QtUiTools import QUiLoader
+
+class item(QWidget):
+    def __init__(self) -> None:
+        super().__init__()
+        self.ui = QUiLoader().load('item.ui')
+        self.ui.show()
+```
+
+---
+
+# 窗口嵌套
+
+> 我们在设计类似QQ的好友列表的时候发现在好友多的时候会自动出现滚动条，让我们可以向下滑动，这就要用到我们的窗口嵌套功能了
+
+---
+
+## 创建新的item
+
+> 我们将这没一条好友信息另外用一个item窗口装着
+>
+> 我们先创建一个widget窗口
+>
+> 这个时候我们发现这个窗口自己就有上面的一条栏，但我们的好友信息显示那肯定时没有的呀
+>
+> 这个无需担心，在单个作为窗口显示的时候确实会这样
+>
+> 但是如果被当做一个组件放入其他窗口中时，这个栏自动就会消失的，我们照常布局即可
+
+**注意：为了最终显示不被压缩，我们对这个item窗口固定死大小，即设置最大大小和最小大小**
+
+---
+
+## 创建item类
+
+> 我们最重要的还是要在Python中调用它，实现相应的功能
+>
+> 我们来回顾一下前面调用动态ui文件生成界面的步骤：
+>
+> 我们需要用一个变量来接收动态ui文件加载完成后的对象
+>
+> 然后通过这个对象来调用该窗口内部的组件
+>
+> 因为我们后面将把这个item当做组件放入其他的组件中，所以这个item必须具有QWidget的属性，这里我们只需要通过继承即可实现
+
+```python
+from PySide2.QtWidgets import QApplication, QWidget
+from PySide2.QtUiTools import QUiLoader
+
+class item(QWidget):
+    def __init__(self) -> None:
+        super().__init__()
+        self.ui = QUiLoader().load('item.ui')
+        # self.ui.show()
+```
+
+**注意：这里千万不要单独show了，会单独出现一个串口来显示这个item，正确的做法应当是像前面设计的一样，设置parent属性值，然后只需要父窗口show即可**
+
+---
+
+## main.ui设计
+
+> 在百般尝试后，我终于悟了，特意来写写心得
+>
+> 我们首先在需要滑动的区域放置一个`Scroll Area`
+>
+> 如果我们需要之后竖直放置item，那么我们放一个`Vertical Spacer`（也就是那个竖着的弹簧）
+>
+> 然后我们看到右边的对象`scrollArea`，我们将这个对象整个采取垂直布局即可
+>
+> 垂直布局完，他们的位置会比较乱，我们手动拖拉到满意的位置即可
+
+---
+
+## 主窗口的调用
+
+> 我们前面说了，这个item就由主窗口来放入组件了
+>
+> 我们前面用了垂直布局，于是会出现一个垂直层，我们只需要将这些item放入这些垂直层中即可
+>
+> 这个垂直层从设计软件上是不可见的，那个层也没显示出来，也看不到名字，但是这个名字是按标准的排序编号的，我们可以通过这个层是第几个垂直层来推测它的名字
+>
+> 比如当前只放了这一个垂直层，那么这个垂直层的名字就为`verticalLayout`
+>
+> 我们调用这个对象的`addWidget`方法即可
+
+**注意：我们要放入的是这个窗口，并不是这个类，于是添加的是ui而不是直接把类放进去**
+
+```python
+from item import item
+from PySide2.QtUiTools import QUiLoader
+
+class kernel:
+    def __init__(self) -> None:
+        self.ui = QUiLoader().load('main.ui')
+
+        self.ItemList = [item() for _ in range(10)]
+        for it in self.ItemList:
+            self.ui.verticalLayout.addWidget(it.ui)
+
+        self.ui.show()
+```
+
+---
+
+# 自定义信号
+
+## 背景
+
+> 我们在构造GUI项目的时候，难免也会用到多线程的技术来优化用户的体验，但是在QT中，不允许多个线程操作GUI界面，很容易出bug，于是我们需要借助信号与槽的方式解决这个问题
+>
+> 这里的信号与槽简直是神器，好多操作的bug都很好的被这个机制解决了
+
+---
+
+## 声明&定义
+
+> 我们需要导入signal和qobject
+
+```python
+from PySide2.QtCore import QObject, Signal
+```
+
+> 我们需要创建一个自己的信号类来继承qobject类
+>
+> 然后在内部创建各种静态变量信号供后面使用
+>
+> 然后再用该类创建一个对象，之后就用这个对象来发出信号和绑定信号与槽了
+
+```python
+class MySignals(QObject):
+    GetSource = Signal()
+    PutItem = Signal(int)
+    AddLoadItem = Signal(int, str, str, tuple, str, str, str)
+    CacheLoadSuccess = Signal()
+    DownLoadComplete = Signal()
+    AddItemToSql = Signal(int, str)
+    Filtrate = Signal()
+    GetFiltrate = Signal(str, str, str, str)
+    SpiderWorking = Signal()
+    SpiderEnd = Signal()
+    CheckSqlEmpty = Signal()
+    VisitComplete = Signal()
+    NewItemFind = Signal(str, str, tuple, str, str, str)
+    ItemUpdate = Signal(Item)
+
+sig = MySignals()
+```
+
+> 这里创建signal对象的时候所传入的各个参数是类型对象，像上面的str，int，tuple，Item都是类名
+>
+> 所绑定的槽函数也要一模一样的传参
+
+---
+
+## 抛出信号
+
+> 我们在各个类对象之间通讯，或者线程之间通讯一般都通过抛出信号，然后处理对应的方法来解决
+>
+> 我们调用信号对象的emit然后传入对应的参数即可
+
+```python
+for it in res:
+    # 如果是新图片，则添加到新id
+    if it[0] not in t:
+        sig.NewItemFind.emit(it[1], it[5], it[3], it[2], it[4], it[0])
+```
+
+---
+
+## 绑定信号
+
+> 我们在需要捕获信号的类中要绑定对应的信号和槽
+>
+> 这样在信号发出的时候就会自动捕获然后调用对应的方法
+>
+> 一般我们习惯将槽函数和信号名取的一样，这样非常好分辨
+
+### 绑定的声明
+
+```python
+sig.NewItemFind.connect(self.NewItemFind)
+```
+
+### 槽函数的定义
+
+```python
+def NewItemFind(self, url, price, size, info, location, picurl):
+        self.AddItem(url, price, size, info, location, picurl)
+```
+
+---
 

@@ -356,3 +356,61 @@ public:
 };
 ```
 
+---
+
+# 例题——得到山形数组的最少删除次数
+
+> Problem: [1671. 得到山形数组的最少删除次数](https://leetcode.cn/problems/minimum-number-of-removals-to-make-mountain-array/description/)
+
+## 思路
+
+> 这题实际上就是用两次dp求最长上升子序列，前后缀分离，前缀做一次，后缀做一次
+
+## Code
+
+```c++
+class Solution {
+public:
+    int minimumMountainRemovals(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> f(n), t(n), s;
+        s.push_back(0);
+        int ma = 0;
+        auto Find = [&] (int x) {
+            int l = 0, r = ma;
+            int ans = 0;
+            while (l <= r) {
+                int m = (l + r) >> 1;
+                if (s[m] >= x) r = m - 1;
+                else l = m + 1, ans = m;
+            }
+            return ans;
+        };
+        for (int i = 0; i < n; ++i) {
+            int p = Find(nums[i]);
+            f[i] = p + 1;
+            if (s.size() - 1 < p + 1) s.push_back(nums[i]);
+            else s[p + 1] = min(s[p + 1], nums[i]);
+            ma = max(ma, p + 1);
+        }
+        for (int i = 1; i <= ma; ++i) s[i] = 1e9;
+        ma = 0;
+        for (int i = n - 1; i >= 0; --i) {
+            int p = Find(nums[i]);
+            t[i] = p + 1;
+            if (s.size() - 1 < p + 1) s.push_back(nums[i]);
+            else s[p + 1] = min(s[p + 1], nums[i]);
+            ma = max(ma, p + 1);
+        }
+        int ans = 0;
+        for (int i = 1; i < n - 1; ++i) if (f[i] != 1 && t[i] != 1) ans = max(ans, f[i] + t[i] - 1);
+        for (int x: f) cout << x << ' ';
+        cout << endl;
+        for (int x: t) cout << x << ' ';
+        return n - ans;
+    }
+};
+```
+
+
+
