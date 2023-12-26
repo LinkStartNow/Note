@@ -412,5 +412,88 @@ public:
 };
 ```
 
+---
 
+# 例题——参加考试的最大学生数
 
+> Problem: [1349. 参加考试的最大学生数](https://leetcode.cn/problems/maximum-students-taking-exam/description/)
+
+## 思路
+
+> 这题显然我们得通过dp来考虑，但我们并不能像往常一样一个坑一个坑来dp考虑，我们将一整行的组合来当做一种状态来考虑
+>
+> 我们用dp\[i]\[j]表示当第i行的组合为j时，前i行的最大学生数
+>
+> 我们可以枚举当前行可能的组合，然后加上在这种组合情况下，之前行所能得到的最大结果即可得到当前行的dp\[i]。
+>
+> 一行最多8个位置，我们一位一位比过去虽然也还好，但是我们有更优的方案做判断：由于每个位置只有坐与不坐两种状态，也就是说通过一个二进制位刚好就能表示一个位置的状态，那么一行的状态也就通过几个二进制数就可以表示了，我们将这个状态映射成这些二进制数组成的值
+>
+> 这样子我们通过简单的位运算就可以快速判断某些组合是否合理，以及能否与前面的某种状态搭配了
+
+---
+
+## Code
+
+```c++
+class Solution {
+public:
+    int maxStudents(vector<vector<char>>& seats) {
+        auto lowbit = [&] (int x) {
+            return x & -x;
+        };
+
+        auto Check = [&] (int low, int high) {
+            if ((low << 1) & high) return false;
+            if ((low >> 1) & high) return false;
+            return true;
+        };
+
+        int n = seats.size(), m = seats[0].size();
+        int t = 1 << m;
+        vector<vector<int>> dp(n, vector<int>(t));
+        vector<int> mp(n), Has[n];
+        for (int i = 0; i < n; ++i) {
+            int sum = 0;
+            for (int j = 0; j < m; ++j) {
+                int z = seats[i][j] == '.' ? 1 : 0;
+                sum = sum * 2 + z;
+            }
+            mp[i] = sum;
+        }
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < t; ++j) {
+                // 判断当前排列是否全是好用的位置,且不会左右相邻
+                if ((j & mp[i]) == j && (((j << 1) & j) == 0)) {
+                    Has[i].push_back(j);
+
+                    // 先加上当前行排列的人数
+                    int sum = 0, tmp = j;
+                    while (tmp) {
+                        ++sum;
+                        tmp -= lowbit(tmp);
+                    }
+                    dp[i][j] = sum;
+
+                    int ma = 0;
+                    if (i != 0)
+                        for (int x: Has[i - 1]) {
+                            if (Check(j, x)) ma = max(ma, dp[i - 1][x]);
+                        }
+                    dp[i][j] += ma;
+                } 
+            }
+        }
+        int ans = 0;
+        for (int x: Has[n - 1]) ans = max(ans, dp[n - 1][x]);
+        return ans;
+    }
+};
+```
+
+---
+
+## 细节优化
+
+> 每次都去遍历上一层的每个状态是很浪费时间的，因为有很多位置根本不合理，比如安排人坐不能用的位置，或者左右相邻了。但其实我们在考虑当前行状态时已经判断完这个了，下一层的时候再回过头重新判断一遍实在是浪费，于是我们可以开一个vector来记录每一层合理的组合方案，可以大大节约时间。
+>
+> 在判断当前行某种搭配所能容纳的人数时，我们可以直接遍历每一位，当然也可以用lowbit直接开减（个人感觉可能会快些），虽然差不了多少，毕竟也就最多8位
