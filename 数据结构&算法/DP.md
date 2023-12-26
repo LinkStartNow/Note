@@ -2,7 +2,7 @@
 
 # 例题——打家劫舍
 
-[题目链接]([198. 打家劫舍 - 力扣（LeetCode）](https://leetcode.cn/problems/house-robber/))
+> Problem: [198. 打家劫舍](https://leetcode.cn/problems/house-robber/description/)
 
 ## 首次自己尝试
 
@@ -65,7 +65,7 @@ class Solution:
 
 ## 打家劫舍2
 
-[链接]([213. 打家劫舍 II - 力扣（LeetCode）](https://leetcode.cn/problems/house-robber-ii/description/?envType=daily-question&envId=2023-09-17))
+> Problem: [213. 打家劫舍 II](https://leetcode.cn/problems/house-robber-ii/description/)
 
 这是例题的强化版，改变就是，所有房子都连在了一起，所以头尾不能同时选择
 
@@ -119,7 +119,7 @@ class Solution:
 
 ## 打家劫舍3
 
-[链接]([337. 打家劫舍 III - 力扣（LeetCode）](https://leetcode.cn/problems/house-robber-iii/description/?envType=daily-question&envId=2023-09-18))
+> Problem: [337. 打家劫舍 III](https://leetcode.cn/problems/house-robber-iii/description/)
 
 这里把所有的房子放在了一颗二叉树上，约束是父节点和子节点不能同时选
 
@@ -414,11 +414,13 @@ public:
 
 ---
 
-# 例题——参加考试的最大学生数
+# 状压dp
+
+## 例题——参加考试的最大学生数
 
 > Problem: [1349. 参加考试的最大学生数](https://leetcode.cn/problems/maximum-students-taking-exam/description/)
 
-## 思路
+### 思路
 
 > 这题显然我们得通过dp来考虑，但我们并不能像往常一样一个坑一个坑来dp考虑，我们将一整行的组合来当做一种状态来考虑
 >
@@ -432,7 +434,7 @@ public:
 
 ---
 
-## Code
+### Code
 
 ```c++
 class Solution {
@@ -492,7 +494,7 @@ public:
 
 ---
 
-## 细节优化
+### 细节优化
 
 > 每次都去遍历上一层的每个状态是很浪费时间的，因为有很多位置根本不合理，比如安排人坐不能用的位置，或者左右相邻了。但其实我们在考虑当前行状态时已经判断完这个了，下一层的时候再回过头重新判断一遍实在是浪费，于是我们可以开一个vector来记录每一层合理的组合方案，可以大大节约时间。
 >
