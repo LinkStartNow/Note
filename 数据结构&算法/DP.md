@@ -414,6 +414,74 @@ public:
 
 ---
 
+# 例题——收集巧克力
+
+> Problem: [2735. 收集巧克力](https://leetcode.cn/problems/collecting-chocolates/description/)
+
+## 思路
+
+> 买每个类型的巧克力的价格都随着转换的次数而变动，于是我们可以将每个物品转换了j次的价格来存储下来
+>
+> 那么dp\[i][j] = min(dp\[i][j - 1], nums[(j + i) % n])
+>
+> 因为总共只有n个物品，所以n - 1次就是最多了，再多就循环回去了，所以第二维开到n即可
+>
+> 转换k次时的最低消耗就是k * x + sum(dp\[i][j]);
+>
+> 这样子通过一个dp即可推出结果
+
+---
+
+## Code
+
+```c++
+class Solution {
+public:
+    long long minCost(vector<int>& nums, int x) {
+        int n = nums.size();
+        long long ans = 0;
+        long long dp[n][n];
+        for (int i = 0; i < n; ++i) dp[i][0] = nums[i], ans += nums[i];
+        for (long long i = 1; i < n; ++i) {
+            long long sum = i * x;
+            for (int j = 0; j < n; ++j) {
+                dp[j][i] = min(dp[j][i - 1], (long long)nums[(j + i) % n]);
+                sum += dp[j][i];
+            }
+            ans = min(ans, sum); 
+        }
+        return ans;
+    }
+};
+```
+
+---
+
+## 优化
+
+> 每一层的dp\[i][j]只依赖于上一层的dp\[i][j - 1]，于是我们可以只用一维来表示
+
+```c++
+class Solution {
+public:
+    long long minCost(vector<int>& nums, int x) {
+        int n = nums.size();
+        long long ans = 0;
+        long long dp[n];
+        for (int i = 0; i < n; ++i) dp[i] = nums[i], ans += nums[i];
+        for (long long i = 1; i < n; ++i) {
+            long long sum = i * x;
+            for (int j = 0; j < n; ++j) {
+                dp[j] = min(dp[j], (long long)nums[(j + i) % n]);
+                sum += dp[j];
+            }
+            ans = min(ans, sum); 
+        }
+        return ans;
+    }
+};
+```
+
 # 状压dp
 
 ## 例题——参加考试的最大学生数
