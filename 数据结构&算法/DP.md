@@ -482,6 +482,107 @@ public:
 };
 ```
 
+---
+
+# 例题——字符串中的额外字符
+
+> Problem: [2707. 字符串中的额外字符](https://leetcode.cn/problems/extra-characters-in-a-string/description/)
+
+## 思路
+
+> 这题一看到最终求剩余**最少**，那么就要留心眼了，这题也许又是个dp题
+>
+> 我们最终的那些额外字符可能出现在开头、结尾以及中间的部分，我们可以定义一个dp数组，下标到i前的子串最少的额外字符为几个
+>
+> 我们啥也不拼接的话，结果就是dp[i] = dp[i - 1] + 1，就直接多了一个字符
+>
+> 然后我们考虑能不能和前面的某个串来拼接成某个新的字符串，于是我们将dp[j]（j < i）全部比较一遍，能拼接就进行拼接，求最小值来转移
+
+---
+
+## Code
+
+```c++
+class Solution {
+public:
+    int minExtraChar(string s, vector<string>& dictionary) {
+        map<string, bool> mp;
+        for (string& s: dictionary) mp[s] = true;
+        int n = s.size();
+        vector<int> dp(n + 7, 2 * n);
+        dp[0] = 0;
+        for (int i = 1; i <= n; ++i) {
+            dp[i] = dp[i - 1] + 1;
+            for (int l = 1; l <= i; ++l) {
+                string t = s.substr(i - l, l);
+                if (mp.count(t)) dp[i] = min(dp[i], dp[i - l]);
+            }
+        }
+        return dp[n];
+    }
+};
+```
+
+## 优化
+
+> 我们在判断当前子串是否在字典中时，每次都需要从头开始判断，这样浪费了大量的时间
+>
+> 其实我们可以通过字典树来优化这个过程，将每个字典中的字符串倒序插入字典树，最终判断的时候也倒序一个个查询即可省去大量时间
+
+### Code
+
+```c++
+class Trie
+{
+    vector<Trie*> nx;
+
+public:
+    bool end;
+
+    Trie(): nx(26, nullptr), end(false) {}
+
+    static void Push(Trie*& t, char c)
+    {
+        int z = c - 'a';
+        if (!t->nx[z]) t->nx[z] = new Trie;
+        t = t->nx[z];
+    }
+
+    static bool Find(Trie*& t, char c)
+    {
+        int z = c - 'a';
+        t = t->nx[z];
+        return t ? t->end : false;
+    }
+};
+
+class Solution {
+public:
+    int minExtraChar(string s, vector<string>& dictionary) {
+        Trie* t = new Trie;
+        for (auto& x: dictionary) {
+            Trie* tmp = t;
+            for (int i = x.size() - 1; i >= 0; --i) Trie::Push(tmp, x[i]);
+            tmp->end = true;
+        }
+        int n = s.size();
+        vector<int> dp(n + 1, 3000);
+        dp[0] = 0;
+        for (int i = 1; i <= n; ++i) {
+            Trie* tmp = t;
+            dp[i] = dp[i - 1] + 1;
+            for (int j = i - 1; j >= 0 && tmp; --j) {
+                if (Trie::Find(tmp, s[j])) 
+					dp[i] = min(dp[i], dp[j]);
+            }
+        }
+        return dp[n];
+    }
+};
+```
+
+---
+
 # 状压dp
 
 ## 例题——参加考试的最大学生数
@@ -567,3 +668,324 @@ public:
 > 每次都去遍历上一层的每个状态是很浪费时间的，因为有很多位置根本不合理，比如安排人坐不能用的位置，或者左右相邻了。但其实我们在考虑当前行状态时已经判断完这个了，下一层的时候再回过头重新判断一遍实在是浪费，于是我们可以开一个vector来记录每一层合理的组合方案，可以大大节约时间。
 >
 > 在判断当前行某种搭配所能容纳的人数时，我们可以直接遍历每一位，当然也可以用lowbit直接开减（个人感觉可能会快些），虽然差不了多少，毕竟也就最多8位
+
+---
+
+# 数位dp
+
+## 解释
+
+> 常见的数位dp我们一般直接上灵神的模板，一位一位模拟过去
+>
+> 通常定义一个`int fun(int pos, int mask, bool Limit, bool Isnum)`函数
+>
+> 返回最终符合要求的答案数
+>
+> 参数表示为：
+>
+> 1. pos：当前考虑到的位数
+> 2. mask：通过一个数的各个数位记录哪些数字受限了
+> 3. Limit：记录前面的数字是否已经到达极限，若到达极限则当前的枚举将受限
+> 4. Isnum：用来记录前面的数字是否为空
+>
+> 由于数位dp往往伴随着多次的重复筛选，于是我们可以通过记忆化搜索来优化处理时间
+>
+> 具体题目具体分析
+
+## 例题——统计特殊整数
+
+> Problem: [2376. 统计特殊整数](https://leetcode.cn/problems/count-special-integers/description/)
+
+### 思路
+
+> 直接上灵神模板就行，这就是个模板题
+
+---
+
+### Code
+
+```c++
+
+class Solution {
+public:
+    int countSpecialNumbers(int n) {
+        string s = to_string(n);
+        int len = s.size();
+        int dp[len][1024];
+        memset(dp, -1, sizeof(dp));
+        
+        function<int(int, int, bool, bool)> yyds = [&] (int pos, int mask, bool Limit, bool IsNum) {
+            if (pos == len) {
+                return int(IsNum);
+            }
+
+            if (!Limit && IsNum && dp[pos][mask] != -1) return dp[pos][mask];
+
+            int res = 0;
+
+            if (!IsNum) res += yyds(pos + 1, mask, false, false);
+
+            int up = Limit ? s[pos] - '0' : 9;
+
+            for (int i = !IsNum; i <= up; ++i) {
+                if ((mask >> i) & 1) continue;
+                res += yyds(pos + 1, mask | (1 << i), Limit && i == s[pos] - '0', true);
+            }
+            if (!Limit && IsNum) dp[pos][mask] = res;
+            return res;
+        };
+        return yyds(0, 0, true, false);
+    }
+};
+```
+
+---
+
+### 细节
+
+> 细节的地方主要在于记忆化存储部分，我们的函数用到了四个变量来存储状态，然而，用来存储的数组居然只使用了两维
+>
+> 这是因为，记忆化的本质是记录重复计算得出来的结果，从而优化计算时间，所以如果没有重复计算的内容将不需要存储
+>
+> 我们从前往后调用的时候只有一种情况会使得limit为true，同样也只有一种情况会使Isnum为false，所以这两种情况单拎出来即可
+
+---
+
+### 细节2
+
+> 判断已经完成计算的应该写在前面（被调用的时候直接return），这样在调用判断的时候就不用写又臭又长的判断了哈哈哈
+
+---
+
+## 例题——最大为N的数字组合
+
+> Problem: [902. 最大为 N 的数字组合](https://leetcode.cn/problems/numbers-at-most-n-given-digit-set/description/)
+
+### 思路
+
+> 一样的板子题，这里甚至连数字相同的限制都没了，直接再少一维
+
+---
+
+### Code
+
+```c++
+class Solution {
+public:
+    int atMostNGivenDigitSet(vector<string>& digits, int n) {
+        string s = to_string(n);
+        n = s.size();
+        int dp[n];
+        memset(dp, -1, sizeof(dp));
+        
+        function<int(int, bool, bool)> yyds = [&] (int pos, bool Limit, bool Isnum) {
+            if (pos == n) return int(Isnum);
+            if (!Limit && Isnum && dp[pos] != -1) return dp[pos];
+            int res = 0;
+            if (!Isnum) res = yyds(pos + 1, false, false);
+            char up = Limit ? s[pos] : '9';
+            for (string& st: digits) {
+                if (st[0] > up) break;
+                res += yyds(pos + 1, Limit && st[0] == up, true);
+            }
+            if (!Limit && Isnum) dp[pos] = res;
+            return res;
+        };
+        return yyds(0, true, false);
+    }
+};
+```
+
+---
+
+## 例题——数字1的个数
+
+> Problem: [233. 数字 1 的个数](https://leetcode.cn/problems/number-of-digit-one/description/)
+
+### 思路
+
+> 直接上模板即可
+>
+> 要注意的是，这里我们需要记录1出现的个数，这样函数传参中就多传了1的个数，同样的记忆化搜索就需要多记录这一位
+
+---
+
+### Code
+
+```c++
+class Solution {
+public:
+    int countDigitOne(int n) {
+        string s = to_string(n);
+        n = s.size();
+        int dp[n][10];
+        memset(dp, -1, sizeof(dp));
+        function<int(int, int, bool, bool)> yyds = [&] (int pos, int cnt, bool Limit, bool Isnum) {
+            if (pos == n) return Isnum ? cnt : 0;
+            if (!Limit && Isnum && dp[pos][cnt] != -1) return dp[pos][cnt];
+            int res = 0;
+            if (!Isnum) res = yyds(pos + 1, cnt, false, false);
+            int up = Limit ? s[pos] - '0' : 9;
+            for (int i = !Isnum; i <= up; ++i) {
+                res += yyds(pos + 1, cnt + (i == 1), Limit && i == up, true);
+            }
+            if (!Limit && Isnum) dp[pos][cnt] = res;
+            return res;
+        };
+        return yyds(0, 0, true, false);
+    }
+};
+```
+
+---
+
+## 例题——不含连续1的非负整数
+
+> Problem: [600. 不含连续1的非负整数](https://leetcode.cn/problems/non-negative-integers-without-consecutive-ones/description/)
+
+### 思路
+
+> 这题和前面几乎一样，我采用的方式是将这个整数先化成二进制数的形式存储起来
+>
+> 然后每次记录一下前一个位是否用了1即可
+
+---
+
+### Code
+
+```c++
+class Solution {
+public:
+    int findIntegers(int n) {
+        bool ssr[31];
+        for (int i = 0; i < 31; ++i) {
+            if (n & 1) ssr[30 - i] = true;
+            else ssr[30 - i] = false;
+            n >>= 1;
+        }
+        n = 31;
+        int dp[n][2];
+        memset(dp, -1, sizeof(dp));
+        function<int(int, bool, bool)> yyds = [&] (int pos, bool One, bool Limit) {
+            if (pos == n) return 1;
+            if (!Limit && dp[pos][One] != -1) return dp[pos][One];
+            bool up = Limit ? ssr[pos] : true;
+            int res = 0;
+            res += yyds(pos + 1, false, Limit && ssr[pos] == false);
+            if (up && !One) res += yyds(pos + 1, true, Limit && ssr[pos] == true);
+            if (!Limit) dp[pos][One] = res;
+            return res;
+        };
+        return yyds(0, false, true);
+    }
+};
+```
+
+---
+
+## 例题——统计整数数目
+
+> Problem: [2719. 统计整数数目](https://leetcode.cn/problems/count-of-integers/description/)
+
+### 思路
+
+> 初步思路就是将这个分成两次数位dp的模板问题进行求解
+>
+> 将nums2求一次，然后nums1-1求一次
+>
+> 由于不太好处理nums1-1后的变化情况，于是我们求出nums1，然后单独判断nums1这一个数字
+
+---
+
+### Code
+
+```c++
+const int mod = 1e9 + 7;
+
+class Solution {
+public:
+    int count(string num1, string num2, int min_sum, int max_sum) {
+        int x = Find(num1, min_sum, max_sum);
+        int y = Find(num2, min_sum, max_sum);
+        int cnt = 0;
+        for (char z: num1) cnt += z - '0';
+        if (cnt >= min_sum && cnt <= max_sum) --x;
+        return ((y - x) % mod + mod) % mod;
+    }
+
+    int Find(string& s, int l, int r)
+    {
+        int n = s.size();
+        int dp[n][401];
+        memset(dp, -1, sizeof(dp));
+        function<int(int, int, bool)> yyds = [&] (int pos, int cnt, bool Limit) {
+            if (pos == n) {
+                if (cnt >= l && cnt <= r) return 1;
+                return 0;
+            }
+            if (!Limit && dp[pos][cnt] != -1) return dp[pos][cnt];
+            int res = 0;
+            int up = Limit ? s[pos] - '0' : 9;
+            for (int i = 0; i <= up; ++i) {
+                res += yyds(pos + 1, cnt + i, Limit && (i == up));
+                res %= mod;
+            }
+            if (!Limit) dp[pos][cnt] = res;
+            return res;
+        };
+        return yyds(0, 0, true) % mod;
+    }
+};
+```
+
+---
+
+### 小坑
+
+> 这里减法取模容易求出负数，于是要加上取的模再取模以防万一
+
+---
+
+### 优化
+
+> 是的，你没看错，本题还有优化
+>
+> 由于这里遍历的数不止有上界，还存在下界，于是我们也可以不止使用一个Limit标记来表示前面的位到达了上界，我们多用一个标记表示前面的位到达了下界
+>
+> 这样我们通过一次记忆化搜索即可实现，大大节约时间
+
+---
+
+#### Code
+
+```c++
+const int mod = 1e9 + 7;
+
+class Solution {
+public:
+    int count(string num1, string num2, int min_sum, int max_sum) {
+        int n = num2.size();
+        num1 = string(n - num1.size(), '0') + num1;
+        int dp[n][401];
+        memset(dp, -1, sizeof(dp));
+
+        function<int(int, int, bool, bool)> yyds = [&] (int pos, int cnt, bool Hi, bool Lo) {
+            if (cnt > max_sum) return 0;
+            if (pos == n) return int(cnt >= min_sum);
+
+            if (!Hi && !Lo && dp[pos][cnt] != -1) return dp[pos][cnt];
+            int res = 0;
+            int hi = Hi ? num2[pos] - '0' : 9;
+            int lo = Lo ? num1[pos] - '0' : 0;
+            for (int i = lo; i <= hi; ++i) {
+                res += yyds(pos + 1, cnt + i, Hi && (i == hi), Lo && (lo == i));
+                res %= mod;
+            }
+            if (!Hi && !Lo) dp[pos][cnt] = res;
+            return res;
+        };
+        return yyds(0, 0, true, true);
+    }
+};
+```
+
