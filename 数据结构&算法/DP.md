@@ -583,6 +583,106 @@ public:
 
 ---
 
+# 背包问题
+
+> 背包问题主要是可以将状态分为考虑当前前多少个物品且空间为某某的情况下的最优价值
+>
+> 当然背包问题也有很多的分类，多多积累就好了
+
+## 01背包
+
+> 可以说最简单的一种背包，就是空间有限，每个物品只能选一个
+>
+> 通常01背包的空间都是可以优化的，也就是当前层的状态只与上一层有关，可以通过滚动数组优化大量空间
+
+### 例题——使数组和小于等于 x 的最少时间
+
+> Problem: [2809. 使数组和小于等于 x 的最少时间](https://leetcode.cn/problems/minimum-time-to-make-array-sum-at-most-x/description/)
+
+#### 思路
+
+> 我们经过分析可以得到每个位置最多只会被清空一次，多次清空没有意义
+>
+> 于是问题就变成了给这n个位子的清空排个合理的顺序实现最优
+>
+> 计sum1为nums1的和，sum2为num2的和：
+>
+> 则每轮所有数字的和就会增加sum2，于是问题就变成了我们需要知道在到第t轮时我们总共能清空的最多数为多少
+>
+> 那么我们就可以用一个二维数组`dp[i][j]`来记录当考虑前`i`个物品且进行`j`次清空操作所能清空的最大值，前面分析过每个位置都只会被清空一次，于是`j > i`是没有意义的
+>
+> 但是每个位置都有可能排在后面，我们如果每次将所有位置都尝试一遍会浪费大量时间
+>
+> 其实清空的顺序应该按照增长速度从小到大来排的，因为如果增速快的先被清空了，那么相比同等情况下清空小的会有更多的回合数增加大的值，所以肯定是优先清空增速慢的
+>
+> 经过以上贪心的分析，这个清空的顺序也就出来了，我们按照nums2排序，从小到大开始清空，这样问题变成了一个类似01背包的问题
+
+#### Code
+
+```c++
+class Solution {
+public:
+    int minimumTime(vector<int>& nums1, vector<int>& nums2, int tar) {
+        vector<pair<int, int>> ssr;
+        int sum1 = 0, sum2 = 0;
+        int n = nums1.size();
+        int i, j;
+        for (i = 0; i < n; ++i) sum1 += nums1[i], sum2 += nums2[i], ssr.emplace_back(pair(nums2[i], i));
+        sort(ssr.begin(), ssr.end());
+        vector<vector<int>> dp(n, vector<int>(n + 1, 0));
+        for (i = 1; i < n + 1; ++i) dp[0][i] = ssr[0].first * i + nums1[ssr[0].second];
+        for (i = 1; i < n; ++i) {
+            auto [x, y] = ssr[i];
+            for (j = 1; j < n + 1; ++j) {
+                dp[i][j] = max(dp[i - 1][j], dp[i - 1][j - 1] + x * j + nums1[y]);
+            }
+        }
+        for (i = 0; i < n + 1; ++i) 
+            if (sum1 + sum2 * i - dp[n - 1][i] <= tar) 
+                return i;
+        return -1;
+    }
+};
+```
+
+---
+
+#### 优化
+
+> 我们发现每次的dp状态只与上一层的有关，我们可以通过滚动数组进行优化
+
+##### Code
+
+```c++
+class Solution {
+public:
+    int minimumTime(vector<int>& nums1, vector<int>& nums2, int tar) {
+        int n = nums1.size();
+        int dp[n + 1];
+        pair<int, int> ssr[n];
+        memset(dp, 0, sizeof(dp));
+        for (int i = 0; i < n; ++i) ssr[i] = {nums2[i], nums1[i]};
+        sort(ssr, ssr + n);
+        for (int i = 0; i < n; ++i) {
+            int x = ssr[i].first, y = ssr[i].second;
+            for (int j = i + 1; j; --j) {
+                dp[j] = max(dp[j], dp[j - 1] + x * j + y);
+            }
+        }
+        int s1 = accumulate(nums1.begin(), nums1.end(), 0);
+        int s2 = accumulate(nums2.begin(), nums2.end(), 0);
+        int s = 0;
+        for (int i = 0; i < n + 1; ++i) {
+            if (s1 + s - dp[i] <= tar) return i;
+            s += s2;
+        }
+        return -1;
+    }
+};
+```
+
+---
+
 # 状压dp
 
 ## 例题——参加考试的最大学生数

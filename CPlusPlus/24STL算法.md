@@ -373,3 +373,35 @@ for (auto x : s3) {
 
 ---
 
+## 求和
+
+> 这个函数虽然不是stl算法中的，但是也非常好用
+
+### 头文件
+
+> 需要包含numeric头文件
+
+```c++
+#include <numeric>
+```
+
+---
+
+### 说明
+
+> 第一个参数是开头地址，第二个参数是结尾地址，第三个参数是求和的基数（也就是初始化的时候`int sum = ?;`）
+
+### Code
+
+```c++
+int main()
+{
+    int a[] {2, 35, 4};
+    cout << accumulate(a, a + 3, 0) << endl;   // 41
+    cout << accumulate(a, a + 3, 3) << endl;   // 44
+
+    vector<int> v {2, 3, 4};
+    cout << accumulate(v.begin(), v.end(), 0) << endl;  // 9
+}
+```
+
