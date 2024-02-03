@@ -583,6 +583,99 @@ public:
 
 ---
 
+# 例题——石子游戏VII
+
+> Problem: [1690. 石子游戏 VII](https://leetcode.cn/problems/stone-game-vii/description/)
+
+## 思路
+
+> 本来看到熟悉的石子游戏以为还是之前的无脑分奇偶就行了，结果啪啪打脸了，这次的石子堆不一定是偶数个，也就是说爱丽丝无法获得稳定的奇偶下标序列了
+>
+> 但其实这类题目就是个动态规划的问题，我们这次依旧通过动态规划来解决
+>
+> 我们可以维护一个二维的dp数组，`dp[l][r]`表示在范围从l到r的区间之中爱丽丝和鲍勃最终的游戏差值，而当前这个状态可以由取掉一个的状态转移过来
+>
+> 也就是从`sum(l + 1, r) + dp[l + 1][r]`和`sum(l, r - 1) + dp[l][r - 1]`转移过来，这俩表示从左边或右边取一个的结果
+
+### Code
+
+```c++
+class Solution {
+public:
+    int stoneGameVII(vector<int>& stones) {
+        int n = stones.size();
+        vector<int> pre(n + 1);
+        for (int i = 1; i <= n; ++i) pre[i] = pre[i - 1] + stones[i - 1];
+        vector<vector<int>> dp(n, vector<int>(n));
+        function<int(int, int)> yyds = [&] (int l, int r) {
+            if (l >= r) return 0;
+            int& ssr = dp[l][r];
+            if (ssr) return ssr;
+            int t1 = pre[r + 1] - pre[l + 1] - yyds(l + 1, r);
+            int t2 = pre[r] - pre[l] - yyds(l, r - 1);
+            return ssr = max(t1, t2);
+        };
+        return yyds(0, n - 1);
+    }
+};
+```
+
+## 优化——递归转递推
+
+> 长度长的区间答案由长度短的得到，最终的状态是长度为1的时候，于是我们可以自然的将递归转化为效率更高的递推
+
+### Code
+
+```c++
+class Solution {
+public:
+    int stoneGameVII(vector<int>& stones) {
+        int n = stones.size();
+        vector<int> pre(n + 1);
+        for (int i = 1; i <= n; ++i) pre[i] = pre[i - 1] + stones[i - 1];
+        vector<vector<int>> dp(n, vector<int>(n));
+        for (int len = 2; len <= n; ++len) {
+            for (int l = 0, r = len - 1; r < n; ++l, ++r) {
+                int t1 = pre[r + 1] - pre[l + 1] - dp[l + 1][r];
+                int t2 = pre[r] - pre[l] - dp[l][r - 1];
+                dp[l][r] = max(t1, t2);
+            }
+        }
+        return dp[0][n - 1];
+    }
+};
+```
+
+---
+
+## 二次优化——空间降维
+
+> 由于我们每次都只依赖于前面一层的空间，于是我们可以将二维空间降为一维（类似背包的优化）
+
+### Code
+
+```c++
+class Solution {
+public:
+    int stoneGameVII(vector<int>& stones) {
+        int n = stones.size();
+        vector<int> pre(n + 1);
+        for (int i = 1; i <= n; ++i) pre[i] = pre[i - 1] + stones[i - 1];
+        vector<int> dp(n);
+        for (int len = 2; len <= n; ++len) {
+            for (int l = 0, r = len - 1; r < n; ++l, ++r) {
+                int t1 = pre[r + 1] - pre[l + 1] - dp[l + 1];
+                int t2 = pre[r] - pre[l] - dp[l];
+                dp[l] = max(t1, t2);
+            }
+        }
+        return dp[0];
+    }
+};
+```
+
+---
+
 # 背包问题
 
 > 背包问题主要是可以将状态分为考虑当前前多少个物品且空间为某某的情况下的最优价值
