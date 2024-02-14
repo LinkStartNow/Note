@@ -676,6 +676,112 @@ public:
 
 ---
 
+# 区间集合
+
+## 例题——无重叠区间
+
+> Problem: [435. 无重叠区间](https://leetcode.cn/problems/non-overlapping-intervals/description/)
+
+### 思路1——动态规划
+
+> 这题实际上就是求不重叠区间的最大个数
+>
+> 我们可以将所有区间先按照开始时间（或者结束时间）排序。然后去求以每一个区间为结尾的最大区间个数，这个转移的方程就是官方方案中的往前去找所有结束时间比当前开始时间早的区间的dp值，但很显然这么写复杂度过高了，我们比较了许多没用的值。
+> 其实我们可以类比最长上升子序列的问题，那题的优化就是另开一个数组记录某个长度下最小的结尾值。这里也是如此，我们记录下某个长度下最早的结束时间即可
+> 这个长度的数组又是显然单调的，可以二分查找优化一下
+
+#### Code
+
+```c++
+class Solution {
+public:
+    int eraseOverlapIntervals(vector<vector<int>>& intervals) {
+        sort(intervals.begin(), intervals.end());
+        int n = intervals.size();
+        vector<int> dp(n + 1, 1e9);
+        int ma = 0;
+        for (int i = 0; i < n; ++i) {
+            auto& v = intervals[i];
+            int l = 1, r = ma;
+            while (l <= r) {
+                int m = l + r >> 1;
+                if (v[0] >= dp[m]) l = m + 1;
+                else r = m - 1;
+            }
+            ma = max(ma, ++r);
+            dp[r] = min(dp[r], v[1]);
+        }
+        return n - ma;
+    }
+};
+```
+
+---
+
+### 思路2——贪心
+
+> 这题官方还有一种非常省空间的贪心
+>
+> 假如我们当前的最优解的最左区间为k，如果存在区间l的结束时间比k的结束时间还早，那么我们用j区间代替k区间将会更优（因为给后面预留的时间更加多了，且不减少总个数）
+>
+> 于是我们按结束时间排个序然后遍历一下就行了
+
+#### Code
+
+```c++
+class Solution {
+public:
+    int eraseOverlapIntervals(vector<vector<int>>& intervals) {
+        sort(intervals.begin(), intervals.end(), [&](vector<int>& a, vector<int>& b) {
+            return a[1] < b[1];
+        });
+        int r = intervals[0][1];
+        int ans = 1, n = intervals.size();
+        for (int i = 1; i < n; ++i) {
+            if (intervals[i][0] >= r) {
+                ++ans;
+                r = intervals[i][1];
+            }
+        }
+        return n - ans;
+    }
+};
+```
+
+## 用最少数量的箭引爆气球
+
+> Problem: [452. 用最少数量的箭引爆气球](https://leetcode.cn/problems/minimum-number-of-arrows-to-burst-balloons/description/)
+
+### 思路
+
+> 实际上这题我们可以这么转化，每个区间独立的气球一定需要一次机会去引爆，而区间不独立的气球则一定与某个独立区间的气球相交，我们引爆独立气球的同时也会一起引爆，不用理会
+>
+> 于是问题转化成了求独立区间的最大个数，直接沿用上题的做法即可
+
+### Code
+
+```c++
+class Solution {
+public:
+    int findMinArrowShots(vector<vector<int>>& points) {
+        sort(points.begin(), points.end(), [&](vector<int>& a, vector<int>& b) {
+            return a[1] < b[1];
+        });
+        int r = points[0][1];
+        int ans = 1, n = points.size();
+        for (int i = 1; i < n; ++i) {
+            if (points[i][0] > r) {
+                ++ans;
+                r = points[i][1];
+            }
+        }
+        return ans;
+    }
+};
+```
+
+---
+
 # 背包问题
 
 > 背包问题主要是可以将状态分为考虑当前前多少个物品且空间为某某的情况下的最优价值
