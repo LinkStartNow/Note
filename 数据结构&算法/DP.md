@@ -1,5 +1,56 @@
 众所周知DP是比较抽象的，比较不好总结，所以我们先以例题为例
 
+# 例题——数字拆分
+
+> Problem:[数字拆分]([Ignatius and the Princess III - HDU 1028 - Virtual Judge (vjudge.net)](https://vjudge.net/problem/HDU-1028))
+
+## 思路
+
+> 我们需要维护一个二维的dp数组，`dp[i][j]`表示拆分数组i的分组中最大数字不超过j的方案个数
+>
+> 接下来对于i和j的取值来分类讨论：
+>
+> - 如果i和j其中一个为1那么很显然方案数只能是1种
+> - 如果i与j相等，分组中包含j的情况只能是一种，不包含j的情况为`dp[i][j - 1]`，把这两个加起来就行
+> - 如果i小于j，直接由`dp[i][i]`转移过来就行，因为大于i的方案肯定一种都没有，不存在负数嘛
+> - 如果i大于j，那么我们接下来的分组可以分为包括j和不包括j的组合：
+> 	- 包括j的就用`dp[i - j][j]`表示，然后再补上一个j刚好就是i了
+> 	- xxxxxxxxxx class Solution {public:    int minDistance(string word1, string word2) {        int n = word1.size(), m = word2.size();        vector<int> dp(m + 1);        for (int i = 0; i <= m; ++i) dp[i] = i;        for (int i = 1; i <= n; ++i) {            int ssr = i;            for (int j = 1; j <= m; ++j) {                int yyds = 0;                if (word1[i - 1] == word2[j - 1]) yyds = 1 + min({ dp[j], ssr, dp[j - 1] - 1 });                else yyds = min({ ssr, dp[j], dp[j - 1] }) + 1;                dp[j - 1] = ssr, ssr = yyds;            }            dp[m] = ssr;        }        return dp[m];    }};c++
+
+## Code
+
+```c++
+#include <iostream>
+#include <vector>
+#include <math.h>
+#include <algorithm>
+#include <memory>
+
+using namespace std;
+
+int d[121][121];
+
+int Find(int n, int ma)
+{
+    if (d[n][ma] != -1) return d[n][ma];
+    if (n == 1 || ma == 1) return d[n][ma] = 1;
+    if (n < ma) return d[n][ma] = Find(n, n);
+    if (n > ma) return d[n][ma] = Find(n - ma, ma) + Find(n, ma - 1);
+    return d[n][ma] = Find(n, ma - 1) + 1;
+}
+
+int main()
+{
+    for (auto& v: d) for (int& x: v) x = -1; 
+    int n;
+    while (scanf("%d", &n) != EOF) {
+        printf("%d\n", Find(n, n));
+    }
+}
+```
+
+---
+
 # 例题——打家劫舍
 
 > Problem: [198. 打家劫舍](https://leetcode.cn/problems/house-robber/description/)
@@ -675,6 +726,149 @@ public:
 ```
 
 ---
+
+# 例题——最长公共子序列
+
+> Problem: [1143. 最长公共子序列](https://leetcode.cn/problems/longest-common-subsequence/description/)
+
+## 思路
+
+> 我们可以考虑维护一个二维dp数组，`dp[i][j]`表示第一个第一个串[0, i]和第二个串[0, j]的最长公共子串
+>
+> 假如s1[i] == s2[j]，那么`dp[i][j] = dp[i - 1][j - 1]`，通过未考虑到第i位和未考虑第j位的状态来转移
+>
+> 如果不相等，那么用`dp[i][j - 1]和dp[i - 1][j]`来更新（因为第i和第j已经没有匹配上了，所以用尽可能多的来匹配即可）
+
+## Code
+
+```c++
+class Solution {
+public:
+    int longestCommonSubsequence(string text1, string text2) {
+        int m = text1.size(), n = text2.size();
+        vector<vector<int>> dp(m + 1, vector<int> (n + 1));
+        for (int i = 1; i <= m; ++i) for (int j = 1; j <= n; ++j) {
+            if (text1[i - 1] == text2[j - 1]) dp[i][j] = dp[i - 1][j - 1] + 1;
+            else {
+                dp[i][j] = max(dp[i][j - 1], dp[i - 1][j]);
+            }
+        }
+        return dp[m][n];
+    }
+};
+```
+
+## 空间优化
+
+> 转移时不依赖于上一层之前的层的状态，于是空间可以减去很多，但是并不能减到一维，因为既依赖于当前层的新数据又依赖于上一层的旧数据，于是我们可以用两层的滚动数组来交替使用就行
+
+### Code
+
+```c++
+class Solution {
+public:
+    int longestCommonSubsequence(string text1, string text2) {
+        int m = text1.size(), n = text2.size();
+        vector<vector<int>> dp(2, vector<int> (n + 1));
+        for (int i = 1; i <= m; ++i) for (int j = 1; j <= n; ++j) {
+            int k = i % 2, ssr = k ^ 1;
+            if (text1[i - 1] == text2[j - 1]) dp[k][j] = dp[ssr][j - 1] + 1;
+            else {
+                dp[k][j] = max(dp[k][j - 1], dp[ssr][j]);
+            }
+        }
+        return max(dp[0][n], dp[1][n]);
+    }
+};
+```
+
+# 例题——编辑距离
+
+> Problem: [72. 编辑距离](https://leetcode.cn/problems/edit-distance/description/)
+
+## 思路
+
+> 假定原串为s1，目标串为s2
+>
+> 我们首先要对可以进行的操作进行分析，s1删除一个字符相当于s2删除一个字符，s1替换一个字符相当于s2替换一个字符
+>
+> 我们可以维护一个二维的dp数组，`dp[i][j]`表示s1的前i个字符和s2的前j个字符变成相同的串所需的最少步数
+>
+> 上面的分析将操作等价转换后我们可以发现：`dp[i][j]`最多可以由`dp[i][j - 1] +1`转化而来（最差情况就在此基础上多添加一个字符）。同理`dp[i][j]`也最多可以由`dp[i - 1][j] + 1`转换而来，当然我们还可以使用替换操作，于是`dp[i - 1][j - 1] + 1`也可以（前面按照`dp[i - 1][j - 1]`来修改，第i和第j位直接替换修改）
+>
+> 上面是最差的情况，如果当前位置能直接匹配上，那么当前位置将不会消耗步数，可以直接由`dp[i - 1][j - 1]`转换，当然这种情况不一定是最优的，于是还需要与进行操作的步数来做比较取最小值
+
+## Code
+
+```c++
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        int n = word1.size(), m = word2.size();
+        vector<vector<int>> dp(n + 1, vector<int> (m + 1));
+        for (int i = 0; i <= n; ++i) dp[i][0] = i;
+        for (int i = 0; i <= m; ++i) dp[0][i] = i;
+        for (int i = 1; i <= n; ++i) for (int j = 1; j <= m; ++j) {
+            if (word1[i - 1] == word2[j - 1]) dp[i][j] = 1 + min({dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1] - 1});
+            else dp[i][j] = min({dp[i][j - 1], dp[i - 1][j], dp[i - 1][j - 1]}) + 1;
+        }
+        return dp[n][m];
+    }
+};
+```
+
+## 内存优化
+
+> 这里我们可以发现，每次转移只依赖于上一层的旧数据和前一个的新数据，于是我们可以简单的将内存压缩为两层的交替数组
+
+### Code
+
+```c++
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        int n = word1.size(), m = word2.size();
+        vector<vector<int>> dp(2, vector<int> (m + 1));
+        for (int i = 0; i <= m; ++i) dp[0][i] = i;
+        dp[1][0] = 1;
+        for (int i = 1; i <= n; ++i) for (int j = 1; j <= m; ++j) {
+            int k = i % 2, ssr = k ^ 1;
+            dp[k][0] = i;
+            if (word1[i - 1] == word2[j - 1]) dp[k][j] = 1 + min({dp[ssr][j], dp[k][j - 1], dp[ssr][j - 1] - 1});
+            else dp[k][j] = min({dp[k][j - 1], dp[ssr][j], dp[ssr][j - 1]}) + 1;
+        }
+        return dp[n % 2][m];
+    }
+};
+```
+
+### 进一步内存优化
+
+> 我们发现在当前层值依赖于前一个的新数据，于是我们可以用一个变量暂时记录，最终将数组压缩成一维的
+
+#### Code
+
+```c++
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        int n = word1.size(), m = word2.size();
+        vector<int> dp(m + 1);
+        for (int i = 0; i <= m; ++i) dp[i] = i;
+        for (int i = 1; i <= n; ++i) {
+            int ssr = i;
+            for (int j = 1; j <= m; ++j) {
+                int yyds = 0;
+                if (word1[i - 1] == word2[j - 1]) yyds = 1 + min({ dp[j], ssr, dp[j - 1] - 1 });
+                else yyds = min({ ssr, dp[j], dp[j - 1] }) + 1;
+                dp[j - 1] = ssr, ssr = yyds;
+            }
+            dp[m] = ssr;
+        }
+        return dp[m];
+    }
+};
+```
 
 # 区间集合
 
