@@ -1,129 +1,189 @@
-## 除法求值
+## 统计树中合法路径数目
 
-> Problem: [399. 除法求值](https://leetcode.cn/problems/evaluate-division/description/)
+> Problem: [2867. 统计树中的合法路径数目](https://leetcode.cn/problems/count-valid-paths-in-a-tree/description/)
 
-### 思路1——dfs递归
+### 思路
 
-> 我们可以将所有的除法关系转换成一张图点之间的权值用商表示这样子相乘就能推出除法关系。然后通过是否能到达判断询问的两个字符串是否能算出结果，用一个集合存储已经存在的字符串来判断询问字符串是否合法
->
-> 不过实现的过程太过于繁杂了，当初设计代码的时候也没怎么想，直接用字符串映射节点了
+> 读完这题，大致方向就是从质数节点着手向外扩展，对于每个质数节点我们都只需要知道它的每条出边在到达第一个质数节点前的长度，然后答案就出来了
+
+### 解题方法
+
+> 这里其实通过并查集就可以维护相连的关系，同时控制一下质数节点，保证相邻的几个点连起来就是非质数串，再通过每组的祖先节点来统计链长度就能很快找出每个非质数节点所在链的长度了
+> 记录的时候也只需记录质数节点，以及质数节点的各个出边
+> 我最初的设想对于所有的数我遇到了再去判断这个数是否是质数，判断方法也是草草的用暴力遍历根号来解决，通过共用一个静态数组来将平均的时间复杂度卡到过关
 
 #### Code
 
 ```c++
 class Solution {
+    static bool IsP[100007], Check[100007];
+    bool IsPri(int x)
+    {
+        if (Check[x]) return IsP[x];
+        Check[x] = true;
+        if (x == 1) return IsP[1] = false;
+        int t = sqrt(x);
+        t = min(t, x - 1);
+        for (int i = 2; i <= t; ++i) if (x % i == 0) return false;
+        return IsP[x] = true;
+    }
+
     struct node
     {
-        using pnv = pair<node*, double>;
-        unordered_map<string, pnv> To;
+        vector<int> e;
     };
-    
-    unordered_map<node*, bool> vis;
 
-    node* target;
-    double ssr;
-
-    void dfs(node* root, double value)
+    int GetFa(int x, vector<int>& Fa)
     {
-        if (vis[root]) return;
-        vis[root] = true;
-        if (root == target) {
-            ssr = value;
-            return;
+        return Fa[x] == x ? x : Fa[x] = GetFa(Fa[x], Fa);
+    }
+
+    void Union(int x, int y, vector<int>& Fa, vector<int>& has)
+    {
+        int X = GetFa(x, Fa), Y = GetFa(y, Fa);
+        if (has[X] < has[Y]) {
+            has[Y] += has[X];
+            has[X] = 0;
+            Fa[X] = Y;
         }
-        for (auto& [x, y]: root->To) {
-            dfs(y.first, y.second * value);
+        else {
+            has[X] += has[Y];
+            has[Y] = 0;
+            Fa[Y] = X;
         }
     }
+
 public:
-    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {
-        unordered_map<string, node*> mp;
-        int n = equations.size();
-        for (int i = 0; i < n; ++i) {
-            string& a = equations[i][0];
-            string& b = equations[i][1];
-            if (!mp.count(a)) mp[a] = new node;
-            if (!mp.count(b)) mp[b] = new node;
-            mp[a]->To[b] = {mp[b], values[i]};
-            mp[b]->To[a] = {mp[a], 1 / values[i]};
-        }
-        vector<double> ans;
-        for (auto& v: queries) {
-            string& a = v[0];
-            string& b = v[1];
-            if (!mp.count(a) || !mp.count(b)) {
-                ans.emplace_back(-1.0);
-                continue;
+
+    long long countPaths(int n, vector<vector<int>>& edges) {
+        unordered_map<int, node*> mp;
+        vector<int> Fa;
+        vector<int> has(n + 1, 1);
+        for (int i = 0; i <= n; ++i) Fa.emplace_back(i);
+        for (auto& v: edges) {
+            int& a = v[0];
+            int& b = v[1];
+            if (IsPri(a)) {
+                if (!mp.count(a)) mp[a] = new node;
+                mp[a]->e.emplace_back(b);
+                has[a] = 0;
             }
-            for (auto& [x, y]: mp) vis[y] = false;
-            target = mp[b];
-            ssr = -1;
-            dfs(mp[a], 1);
-            ans.emplace_back(ssr);
+            if (IsPri(b)) {
+                if (!mp.count(b)) mp[b] = new node;
+                mp[b]->e.emplace_back(a);
+                has[b] = 0;
+            }
+            if (!IsPri(a) && !IsPri(b)) Union(a, b, Fa, has);
+        }
+        long long ans = 0;
+        for (auto& [_, p]: mp) {
+            cout << _ << endl;
+            long long c = 1;
+            for (int& v: p->e) {
+                int sum = has[GetFa(v, Fa)];
+                ans += c * sum;
+                c += sum;
+            }
         }
         return ans;
     }
 };
+
+bool Solution::IsP[100007];
+bool Solution::Check[100007];
 ```
 
 ---
 
-### 思路2——加权并查集
+### 质数筛优化
 
-> 众所周知连通性的问题都可以用并查集来解决，这题也是，我们由以上dfs的推理可知，两个点如果连通，那么他们肯定是能求出解的，这样在维护完并查集的情况下，对于每次查询都可以O(1)判断出是否能求出值
->
-> 当然，能求出值还不够，我们对并查集进行扩展，使之成为加权并查集来压缩路径，因为除法具有传递性支持这个压缩条件，所以这里可以通过并查集加权来优化，在维护完成后，对于每次查询也是O(1)就能求出结果
-
-#### 对于映射的优化
-
-> 因为上一份代码直接通过字符串映射的节点，这导致处理邻接关系的时候，也必须要借助字符串实现映射到点，然而这俩map映射不是同一个map，导致又要hash一次，非常的浪费
->
-> 所以这里的优化是索性将所有字符串都直接映射成一个int值，然后重新构建我们熟悉的int值的图，其他的逻辑都没变
+> 对于求质数，给的数据范围最大为1e5，于是我们直接一次性把所有质数判断完成也行，更加省时间，这里以极致的欧拉筛为例做优化
 
 #### Code
 
 ```c++
-using pii = pair<int, double>;
+constexpr int N = 1e5 + 7;
 
 class Solution {
-    vector<pii> Fa;
-    pii GetFa(int x)
+    static bool IsP[N], GetFalg;
+    static vector<int> Pri;
+
+    void InitPri()
     {
-        if (x == Fa[x].first) return Fa[x];
-        pii f = GetFa(Fa[x].first);
-        return Fa[x] = {f.first, Fa[x].second * f.second};
+        GetFalg = true;
+        IsP[1] = IsP[0] = true;
+        for (int i = 2; i < N; ++i) {
+            if (!IsP[i]) Pri.emplace_back(i);
+            for (const int& x: Pri) {
+                if (x * i >= N) break;
+                IsP[x * i] = true;
+                if (i % x == 0) break;
+            }
+        }
     }
 
-    void Union(int x, int y, double val)
+    bool IsPri(int x)
     {
-        auto X = GetFa(x);
-        auto Y = GetFa(y);
-        double ssr = X.second / Y.second * val;
-        Fa[Y.first] = {X.first, ssr};
+        if (!GetFalg) InitPri();
+        return !IsP[x];
+    }
+
+    int GetFa(int x, vector<int>& Fa)
+    {
+        return Fa[x] == x ? x : Fa[x] = GetFa(Fa[x], Fa);
+    }
+
+    void Union(int x, int y, vector<int>& Fa, vector<int>& has)
+    {
+        int X = GetFa(x, Fa), Y = GetFa(y, Fa);
+        if (has[X] < has[Y]) {
+            has[Y] += has[X];
+            has[X] = 0;
+            Fa[X] = Y;
+        }
+        else {
+            has[X] += has[Y];
+            has[Y] = 0;
+            Fa[Y] = X;
+        }
     }
 
 public:
-    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {
-        unordered_map<string, int> mp;
-        int n = equations.size();
-        for (int i = 0; i < n; ++i) {
-            auto& v = equations[i];
-            if (!mp.count(v[0])) mp[v[0]] = Fa.size(), Fa.emplace_back(Fa.size(), 1);
-            if (!mp.count(v[1])) mp[v[1]] = Fa.size(), Fa.emplace_back(Fa.size(), 1);
-            Union(mp[v[0]], mp[v[1]], values[i]);
-        }
-        vector<double> ans;
-        for (auto& v: queries) {
-            double res = -1;
-            if (mp.count(v[0]) && mp.count(v[1])) {
-                auto&& [x, v1] = GetFa(mp[v[0]]);
-                auto&& [y, v2] = GetFa(mp[v[1]]);
-                if (x == y) res = v2 / v1;
+
+    long long countPaths(int n, vector<vector<int>>& edges) {
+        unordered_map<int, vector<int>> mp;
+        vector<int> Fa;
+        vector<int> has(n + 1, 1);
+        for (int i = 0; i <= n; ++i) Fa.emplace_back(i);
+        for (auto& v: edges) {
+            int& a = v[0];
+            int& b = v[1];
+            if (IsPri(a)) {
+                mp[a].emplace_back(b);
+                has[a] = 0;
             }
-            ans.emplace_back(res);
+            if (IsPri(b)) {
+                mp[b].emplace_back(a);
+                has[b] = 0;
+            }
+            if (!IsPri(a) && !IsPri(b)) Union(a, b, Fa, has);
+        }
+        long long ans = 0;
+        for (auto& [_, p]: mp) {
+            long long c = 1;
+            for (int& v: p) {
+                int sum = has[GetFa(v, Fa)];
+                ans += c * sum;
+                c += sum;
+            }
         }
         return ans;
     }
 };
+
+bool Solution::IsP[N];
+bool Solution::GetFalg = false;
+vector<int> Solution::Pri;
 ```
 
+---
