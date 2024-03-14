@@ -1,189 +1,140 @@
-## 统计树中合法路径数目
+### 到达目的地的方案数
 
-> Problem: [2867. 统计树中的合法路径数目](https://leetcode.cn/problems/count-valid-paths-in-a-tree/description/)
+> Problem: [1976. 到达目的地的方案数](https://leetcode.cn/problems/number-of-ways-to-arrive-at-destination/description/)
 
-### 思路
+#### 思路——双Dijkstra
 
-> 读完这题，大致方向就是从质数节点着手向外扩展，对于每个质数节点我们都只需要知道它的每条出边在到达第一个质数节点前的长度，然后答案就出来了
+> 这题需要求最短路的数目，我们通过Dijkstra就可以轻易得到单源最短路，在得到终点（或起点）到任意点的最短路径长度后，我们可以借助这个距离来判断从点a到点b是否是从起点（或终点）到点b的最短路径，如果是，那么到a的所有最短路径就加到b中，然后顺着推到端点，输出端点的计数即可，这个过程就再用一遍Dijkstra就行
 
-### 解题方法
-
-> 这里其实通过并查集就可以维护相连的关系，同时控制一下质数节点，保证相邻的几个点连起来就是非质数串，再通过每组的祖先节点来统计链长度就能很快找出每个非质数节点所在链的长度了
-> 记录的时候也只需记录质数节点，以及质数节点的各个出边
-> 我最初的设想对于所有的数我遇到了再去判断这个数是否是质数，判断方法也是草草的用暴力遍历根号来解决，通过共用一个静态数组来将平均的时间复杂度卡到过关
-
-#### Code
+##### Code
 
 ```c++
+using pii = pair<long long, int>;
+constexpr int mod = 1e9 + 7;
+
 class Solution {
-    static bool IsP[100007], Check[100007];
-    bool IsPri(int x)
-    {
-        if (Check[x]) return IsP[x];
-        Check[x] = true;
-        if (x == 1) return IsP[1] = false;
-        int t = sqrt(x);
-        t = min(t, x - 1);
-        for (int i = 2; i <= t; ++i) if (x % i == 0) return false;
-        return IsP[x] = true;
-    }
+    vector<long long> dis, dis2;
+    vector<int> cnt;
 
-    struct node
+    void dijkstra(vector<pii>* e, int root)
     {
-        vector<int> e;
-    };
-
-    int GetFa(int x, vector<int>& Fa)
-    {
-        return Fa[x] == x ? x : Fa[x] = GetFa(Fa[x], Fa);
-    }
-
-    void Union(int x, int y, vector<int>& Fa, vector<int>& has)
-    {
-        int X = GetFa(x, Fa), Y = GetFa(y, Fa);
-        if (has[X] < has[Y]) {
-            has[Y] += has[X];
-            has[X] = 0;
-            Fa[X] = Y;
-        }
-        else {
-            has[X] += has[Y];
-            has[Y] = 0;
-            Fa[Y] = X;
+        dis[root] = 0;
+        priority_queue<pii> q;
+        q.push({0, root});
+        while (q.size()) {
+            auto [d, u] = q.top(); q.pop();
+            if (-d > dis[u]) continue;
+            for (auto [v, cost]: e[u]) {
+                if (dis[v] == -1 || dis[v] > cost - d) {
+                    dis[v] = cost - d;
+                    q.push({-dis[v], v});
+                }
+            }
         }
     }
+
+    void d2(vector<pii>* e, int root)
+    {
+        dis2[root] = 0;
+        priority_queue<pii> q;
+        q.push({0, root});
+        while (q.size()) {
+            auto [d, u] = q.top(); q.pop();
+            if (-d > dis2[u]) continue;
+            for (auto [v, cost]: e[u]) {
+                if (cost - d == dis[v]) cnt[v] = (cnt[v] + cnt[u]) % mod;
+                if (dis2[v] == -1 || dis2[v] > cost - d) {
+                    dis2[v] = cost - d;
+                    q.push({-dis2[v], v});
+                }
+            }
+        }
+    }
+
 
 public:
-
-    long long countPaths(int n, vector<vector<int>>& edges) {
-        unordered_map<int, node*> mp;
-        vector<int> Fa;
-        vector<int> has(n + 1, 1);
-        for (int i = 0; i <= n; ++i) Fa.emplace_back(i);
-        for (auto& v: edges) {
-            int& a = v[0];
-            int& b = v[1];
-            if (IsPri(a)) {
-                if (!mp.count(a)) mp[a] = new node;
-                mp[a]->e.emplace_back(b);
-                has[a] = 0;
-            }
-            if (IsPri(b)) {
-                if (!mp.count(b)) mp[b] = new node;
-                mp[b]->e.emplace_back(a);
-                has[b] = 0;
-            }
-            if (!IsPri(a) && !IsPri(b)) Union(a, b, Fa, has);
+    int countPaths(int n, vector<vector<int>>& roads) {
+        dis.resize(n, -1);
+        cnt.resize(n, 0); dis2.resize(n, -1);
+        cnt[n - 1] = 1;
+        vector<pii> e[n];
+        for (auto& v: roads) {
+            e[v[0]].emplace_back(v[1], v[2]);
+            e[v[1]].emplace_back(v[0], v[2]);
         }
-        long long ans = 0;
-        for (auto& [_, p]: mp) {
-            cout << _ << endl;
-            long long c = 1;
-            for (int& v: p->e) {
-                int sum = has[GetFa(v, Fa)];
-                ans += c * sum;
-                c += sum;
-            }
-        }
-        return ans;
+        dijkstra(e, n - 1);
+        d2(e, n - 1);
+        return cnt[0];
     }
 };
-
-bool Solution::IsP[100007];
-bool Solution::Check[100007];
 ```
 
 ---
 
-### 质数筛优化
+#### 优化
 
-> 对于求质数，给的数据范围最大为1e5，于是我们直接一次性把所有质数判断完成也行，更加省时间，这里以极致的欧拉筛为例做优化
+> 我们上面进行两遍Dijkstra的原因是难以判断某两点之间是否是最短路径，于是要先找出最短长度做标准来判定
+>
+> 但其实这里也是可以优化掉的，假如某个点成功更新了另一个点的最短距离，那么之前其他点到该点的最短路径也就全部作废，我们重新用当前点赋值就行。如果当前点到某点的距离与之前的最短长度相等，那么说明当前的路径也是满足目前最短距离的路径，加上去即可
+>
+> 这样我们一轮Dijkstra即可得出答案
 
-#### Code
+##### Code
 
 ```c++
-constexpr int N = 1e5 + 7;
+using pii = pair<long long, int>;
+constexpr int mod = 1e9 + 7;
 
 class Solution {
-    static bool IsP[N], GetFalg;
-    static vector<int> Pri;
+    vector<long long> dis;
+    vector<long long> cnt;
 
-    void InitPri()
+    void dijkstra(vector<pii>* e, int root)
     {
-        GetFalg = true;
-        IsP[1] = IsP[0] = true;
-        for (int i = 2; i < N; ++i) {
-            if (!IsP[i]) Pri.emplace_back(i);
-            for (const int& x: Pri) {
-                if (x * i >= N) break;
-                IsP[x * i] = true;
-                if (i % x == 0) break;
+        dis[root] = 0;
+        priority_queue<pii> q;
+        q.push({0, root});
+        while (q.size()) {
+            auto [d, u] = q.top(); q.pop();
+            if (-d > dis[u]) continue;
+            for (auto [v, cost]: e[u]) {
+                if (dis[v] == -1 || dis[v] > cost - d) {
+                    dis[v] = cost - d;
+                    q.push({-dis[v], v});
+                    cnt[v] = cnt[u];
+                }
+                else if (dis[v] == cost - d) cnt[v] = (cnt[u] + cnt[v]) % mod;
             }
-        }
-    }
-
-    bool IsPri(int x)
-    {
-        if (!GetFalg) InitPri();
-        return !IsP[x];
-    }
-
-    int GetFa(int x, vector<int>& Fa)
-    {
-        return Fa[x] == x ? x : Fa[x] = GetFa(Fa[x], Fa);
-    }
-
-    void Union(int x, int y, vector<int>& Fa, vector<int>& has)
-    {
-        int X = GetFa(x, Fa), Y = GetFa(y, Fa);
-        if (has[X] < has[Y]) {
-            has[Y] += has[X];
-            has[X] = 0;
-            Fa[X] = Y;
-        }
-        else {
-            has[X] += has[Y];
-            has[Y] = 0;
-            Fa[Y] = X;
         }
     }
 
 public:
-
-    long long countPaths(int n, vector<vector<int>>& edges) {
-        unordered_map<int, vector<int>> mp;
-        vector<int> Fa;
-        vector<int> has(n + 1, 1);
-        for (int i = 0; i <= n; ++i) Fa.emplace_back(i);
-        for (auto& v: edges) {
-            int& a = v[0];
-            int& b = v[1];
-            if (IsPri(a)) {
-                mp[a].emplace_back(b);
-                has[a] = 0;
-            }
-            if (IsPri(b)) {
-                mp[b].emplace_back(a);
-                has[b] = 0;
-            }
-            if (!IsPri(a) && !IsPri(b)) Union(a, b, Fa, has);
+    int countPaths(int n, vector<vector<int>>& roads) {
+        dis.resize(n, -1), cnt.resize(n, 0);
+        cnt[n - 1] = 1;
+        vector<pii> e[n];
+        for (auto& v: roads) {
+            e[v[0]].emplace_back(v[1], v[2]);
+            e[v[1]].emplace_back(v[0], v[2]);
         }
-        long long ans = 0;
-        for (auto& [_, p]: mp) {
-            long long c = 1;
-            for (int& v: p) {
-                int sum = has[GetFa(v, Fa)];
-                ans += c * sum;
-                c += sum;
+        
+        dis[n - 1] = 0;
+        priority_queue<pii> q;
+        q.push({0, n - 1});
+        while (q.size()) {
+            auto [d, u] = q.top(); q.pop();
+            if (-d > dis[u]) continue;
+            for (auto [v, cost]: e[u]) {
+                if (dis[v] == -1 || dis[v] > cost - d) {
+                    dis[v] = cost - d;
+                    q.push({-dis[v], v});
+                    cnt[v] = cnt[u];
+                }
+                else if (dis[v] == cost - d) cnt[v] = (cnt[u] + cnt[v]) % mod;
             }
         }
-        return ans;
+        return cnt[0];
     }
 };
-
-bool Solution::IsP[N];
-bool Solution::GetFalg = false;
-vector<int> Solution::Pri;
 ```
 
----

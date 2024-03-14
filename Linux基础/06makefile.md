@@ -89,7 +89,6 @@ myapp:main.o add.o des.o mul.o sub.o
  
  output:
      echo $(TST)
-
 ```
 
 **注意：这里的output是固定的输出文件，一定要这么写**

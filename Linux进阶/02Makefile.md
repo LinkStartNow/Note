@@ -4,7 +4,7 @@
 
 ## 2.缩进只能用tab而不能用空格代替
 
-## 3.顺序问题
+## 3.顺序执行问题
 
 ```makefile
 target = tstapp
@@ -55,6 +55,21 @@ clean:
 > 在这里就只会编译所有的.c生成.o而不会继续执行下去生成target
 
 **同理，如果把clean或其他的放在前面则使用make命令默认就调用了他们**
+
+---
+
+## 4. 一个目标多命令
+
+> 用tab控制缩进，就行
+
+```makefile
+install:
+    make -C ./source
+    make -C ./mod
+    mv ./source/Process_Copy_App ./
+```
+
+---
 
 # 可选参数
 
