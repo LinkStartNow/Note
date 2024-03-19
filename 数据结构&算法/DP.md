@@ -1,5 +1,111 @@
 众所周知DP是比较抽象的，比较不好总结，所以我们先以例题为例
 
+# 例题——卖木头块
+
+> Problem: [2312. 卖木头块](https://leetcode.cn/problems/selling-pieces-of-wood/description/)
+
+## 思路
+
+> 这题很明显是个dp的题目，我们可以考虑这样的状态`dp[i][j]`，表示的是宽为i，高为j的木块所能卖的最大价格，我们切的方式只有横着切和竖着切，每次去枚举切的位置就能把问题分成更小的子问题
+>
+> 当前木块也可能整个售卖，于是如果当前尺寸可以直接卖，这个价格也需要考虑。我们想要快速确定当前块的尺寸是否可行需要用hash表记录一下，否则去遍历整个prices数组非常耗时肯定不行
+>
+> 同时递归的时候我们要记忆化搜索，不然非常浪费时间，会做很多重复的计算
+
+### Code
+
+```c++
+class Solution {
+    unordered_map<int, int> mp;
+    int m, n;
+
+    int turn(int x, int y)
+    {
+        return x * 200 + y;
+    }
+
+    long long dp(int x, int y, vector<vector<long long>>& d)
+    {
+        if (d[x][y] != -1) return d[x][y];
+        if (x <= 0 || y <= 0) return d[x][y] = 0;
+        d[x][y] = 0;
+        if (mp.count(turn(x, y))) d[x][y] = mp[turn(x, y)];
+        for (int i = 1; i <= (x >> 1); ++i) d[x][y] = max(d[x][y], dp(i, y, d) + dp(x - i, y, d));
+        for (int i = 1; i <= (y >> 1); ++i) d[x][y] = max(d[x][y], dp(x, i, d) + dp(x, y - i, d));
+        return d[x][y];
+    }
+
+public:
+    long long sellingWood(int m, int n, vector<vector<int>>& prices) {
+        this->m = m, this->n = n;
+        for (auto& v: prices) mp[turn(v[0], v[1])] = v[2];
+        vector<vector<long long>> d(m + 1, vector<long long>(n + 1, -1));
+        return dp(m, n, d);
+    }
+};
+```
+
+---
+
+## 优化1——递归转递推
+
+> 有了递归的思路，我们发现大的状态总是依赖于前面小的状态，于是我们可以从小到大递推来优化时间
+
+### Code
+
+```c++
+class Solution {
+    unordered_map<int, int> mp;
+
+    int turn(int x, int y) { return x * 200 + y; }
+
+public:
+    long long sellingWood(int m, int n, vector<vector<int>>& prices) {
+        for (auto& v : prices) mp[turn(v[0], v[1])] = v[2];
+        vector<vector<long long>> d(m + 1, vector<long long>(n + 1, 0));
+        for (int i = 1; i <= m; ++i) {
+            for (int j = 1; j <= n; ++j) {
+                d[i][j] = mp[turn(i, j)];
+                for (int k = 1; k < i; ++k) d[i][j] = max(d[i][j], d[k][j] + d[i - k][j]);
+                for (int k = 1; k < j; ++k) d[i][j] = max(d[i][j], d[i][k] + d[i][j - k]);
+            }
+        }
+        return d[m][n];
+    }
+};
+```
+
+---
+
+## 优化2——map优化
+
+> 看了数据范围，m和n都比较小，那么用来映射的hash就不需要用map了，直接用数组模拟即可，我们可以维护一个二维数组能表示宽高来进行状态存储
+>
+> 其实这里就能发现dp数组和这个映射数组两维都是一样的，而且每个dp还得由映射数组转移过来，那么我们其实可以只用一个来完成这个功能
+
+### Code
+
+```c++
+class Solution {
+public:
+    long long sellingWood(int m, int n, vector<vector<int>>& prices) {
+        vector<vector<long long>> d(m + 1, vector<long long>(n + 1));
+        for (auto& vs : prices) d[vs[0]][vs[1]] = vs[2];
+        for (int i = 1; i <= m; ++i) {
+            for (int j = 1; j <= n; ++j) {
+                for (int k = 1; k <= (i >> 1); ++k) d[i][j] = max(d[i][j], d[k][j] + d[i - k][j]);
+                for (int k = 1; k <= (j >> 1); ++k) d[i][j] = max(d[i][j], d[i][k] + d[i][j - k]);
+            }
+        }
+        return d[m][n];
+    }
+};
+```
+
+---
+
+
+
 # 例题——数字拆分
 
 > Problem:[数字拆分]([Ignatius and the Princess III - HDU 1028 - Virtual Judge (vjudge.net)](https://vjudge.net/problem/HDU-1028))
