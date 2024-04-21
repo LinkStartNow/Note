@@ -1180,6 +1180,41 @@ public:
 };
 ```
 
+## 完全背包
+
+> 完全背包就是物品可以无限制的选取，解决这类题目的方法就是以当前层前面刚更新的新数据作为参考来转移
+
+### 例题——组合总和 Ⅳ
+
+> Problem: [377. 组合总和 Ⅳ](https://leetcode.cn/problems/combination-sum-iv/description/)
+
+#### 思路
+
+> 这题不像传统的完全背包，这里的数据选取顺序不同也能算上，所以我们第一层不能枚举每个物品了，那样不会考虑到物品的顺序问题
+>
+> 我们第一层应该枚举背包大小，第二层枚举每个物品，理由如下：
+>
+> 对于每个空间大小v，我们的方案可以是任意一种物品放在最后一个，也就是从dp[v - t]由添加大小为t的物品来转移过来的方案，所以第二层才去枚举物品种类可以考虑到顺序问题
+
+#### Code
+
+```c++
+class Solution {
+public:
+    int combinationSum4(vector<int>& nums, int target) {
+        int n = nums.size();
+        vector<int> dp(target + 1);
+        dp[0] = 1;
+        for (int i = 1; i <= target; ++i) {
+            for (const int& v: nums) {
+                if (i >= v && dp[i - v] < INT_MAX - dp[i]) dp[i] += dp[i - v];
+            }
+        }
+        return dp[target];
+    }
+};
+```
+
 ---
 
 # 状压dp
