@@ -1623,3 +1623,189 @@ public:
 };
 ```
 
+---
+
+# 树形DP
+
+> 树形dp就是在树上做dp，原树的形状一般和子树会相似，所以对于整棵树的问题一般都能转移成子树的子问题
+
+## 例题——二叉树的最大深度
+
+> Problem: [104. 二叉树的最大深度](https://leetcode.cn/problems/maximum-depth-of-binary-tree/description/)
+
+### 思路
+
+> 求二叉树的最大深度，其实可以分成求左右两棵子树的最大深度，然后取最大+1就是当前树的最大深度了，这也就是通过dp来将大问题分为子问题，边界就是空树深度为0
+
+### Code
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    int maxDepth(TreeNode* root) {
+        if (!root) return 0;
+        int l = maxDepth(root->left), r = maxDepth(root->right);
+        return max(l, r) + 1;
+    }
+};
+```
+
+---
+
+## 例题——二叉树的直径
+
+> Problem: [543. 二叉树的直径](https://leetcode.cn/problems/diameter-of-binary-tree/description/)
+
+### 思路
+
+> 二叉树的直径实际上就是求二叉树中链的最长长度，而中间的转折点不一定是根节点
+>
+> 其实要解决这个问题我们只需要枚举转折点即可，然后去判断每个转折点的左右子树的最大深度连起来就是当前转折点的最大链长
+
+### Code
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+    int ans = 0;
+    int dfs(TreeNode* root)
+    {
+        if (!root) return 0;
+        int l = dfs(root->left), r = dfs(root->right);
+        ans = max(ans, l + r);
+        return max(l, r) + 1;
+    }
+public:
+    int diameterOfBinaryTree(TreeNode* root) {
+        dfs(root);
+        return ans;
+    }
+};
+```
+
+---
+
+## 例题——感染二叉树需要的总时间
+
+> Problem: [2385. 感染二叉树需要的总时间](https://leetcode.cn/problems/amount-of-time-for-binary-tree-to-be-infected/description/)
+
+### 思路——直径&深度
+
+> 这题其实一眼从start节点开始dfs判断最原举例即可，但是这样需要重新建图，因为没有指向父节点的指针，除非是从根节点开始，否则无法完成遍历
+>
+> 其实这题我们可以拆成两部分来看，假如从start点为根开始往下，我们可以不建图就找到start子树的最大深度，而对于要从start的父亲去遍历的另一边我们就通过求直径的方式来解决
+>
+> 我们固定这个树直径的一端为start节点，来求剩余的最长直径，这里默认将start子树的节点全部忽略即可，因为求深度之后这些节点已经没有意义了。
+>
+> 求深度可以沿用之前的思路，但是这里的要求是确定了一端，那么我们在枚举每个转折点的时候就要考虑左右子树中是否出现了start节点，如果出现了，那么此时计算的直径才是有效的，向上传递的链长也是如果出现了start节点那么那条链优先
+
+### Code
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+    using pib = pair<int, bool>;
+    int ans = 0;
+    pib dfs(TreeNode* root, const int& start)
+    {
+        if (!root) return {0, false};
+        auto [l, lf] = dfs(root->left, start);
+        auto [r, rf] = dfs(root->right, start);
+        if (root->val == start) {
+            ans = max(l, r);
+            return {0, true};
+        }
+        if (lf || rf) {
+            ans = max(ans, l + r + 1);
+            return {lf ? l + 1 : r + 1, true};
+        }
+        return {max(l, r) + 1, false};
+    }
+
+public:
+    int amountOfTime(TreeNode* root, int start) {
+        dfs(root, start);
+        return ans;
+    }
+};
+```
+
+---
+
+### 优化——1个返回值
+
+> 在前面返回的时候我们返回了一个长度和一个是否找到start的bool值，但是其实后一个是可以优化掉的
+>
+> 我们都知道长度都是非负数，所以我们在没有找到start节点的时候就传回对应长度的相反数就可以用来判断了
+
+#### Code
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+    int ans = 0;
+    int dfs(TreeNode* root, const int& start)
+    {
+        if (!root) return 0;
+        int l = dfs(root->left, start);
+        int r = dfs(root->right, start);
+        if (root->val == start) {
+            ans = -min(l, r);
+            return 1;
+        }
+        if (l > 0 || r > 0) {
+            ans = max(ans, abs(l) + abs(r));
+            return l > 0 ? l + 1 : r + 1;
+        }
+        return min(l, r) - 1;
+    }
+
+public:
+    int amountOfTime(TreeNode* root, int start) {
+        dfs(root, start);
+        return ans;
+    }
+};
+```
+
