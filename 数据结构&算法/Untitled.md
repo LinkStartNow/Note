@@ -1,208 +1,259 @@
-## 例题——柱状图中的矩形
+## 例题——求阶乘
 
-> Problem: [84. 柱状图中最大的矩形](https://leetcode.cn/problems/largest-rectangle-in-histogram/description/)
+> Problem:[求阶乘]([P2060 - [蓝桥杯2022初赛\] 求阶乘 - New Online Judge (ecustacm.cn)](http://oj.ecustacm.cn/problem.php?id=2060))
 
-### 思路——前后缀分离+单调栈
+### 思路
 
-> 我们想同时考虑两边，要枚举的情况实在太多，但是如果我们将前缀和后缀分开考虑，那么就会简单很多，我们可以通过单调栈在一遍遍历下求出以某个柱子为最低而达到的最左边界，同样倒着遍历一遍就能处理完后缀，将两者结合分开考虑遍历一遍数组答案就出来了
-
-#### Code
-
-```c++
-class Solution {
-public:
-    int largestRectangleArea(vector<int>& heights) {
-        int n = heights.size();
-        vector<int> l(n, -1), r(n, n);
-        stack<int> s;
-        for (int i = 0; i < n; ++i) {
-            while (s.size() && heights[i] <= heights[s.top()]) s.pop();
-            if (s.size()) l[i] = s.top();
-            s.push(i);
-        }
-        while (s.size()) s.pop();
-        for (int i = n - 1; i >= 0; --i) {
-            while (s.size() && heights[i] <= heights[s.top()]) s.pop();
-            if (s.size()) r[i] = s.top();
-            s.push(i);
-        }
-        int ma = 0;
-        for (int i = 0; i < n; ++i) {
-            int h = heights[i], le = l[i] + 1, re = r[i] - 1;
-            ma = max(ma, h * (re - le + 1));
-        }
-        return ma;
-    }
-};
-```
-
----
-
-### 优化——单次遍历
-
-> 其实，我们在用单调栈入栈寻求左边界的过程中，那些弹出节点的右边界也就确定了
+> 其实求末尾的0只需要求2和5的个数就行，他们相乘才能乘出0，但是2比5多很多，所以只需要考虑5
 >
-> 其中有一点要想明白，我们以寻找左边界为例，在弹出的过程中要寻找到最精准的左边界，那么就需要将相等的值也弹出找到最左的边界，但是我们要一边处理弹出节点的右边界，那么如果弹出的节点和当前节点相等是不是就找错又边界了呢？其实不然，此刻的牺牲是为了全局的胜利，虽然这个节点得到了一个并不完全的右边界，但是当前节点依旧可以代替那个节点完成剩下的任务（因为他们的值是一样的），左边界明显也是一样的，所以只要有一个右边界是精准的，那么最后求的时候就是准确的
+> 对于每个数字我们可以通过整除5求出5的倍数，这些数都能贡献一个0，整除25求出25的倍数，这些数可以共享2个0，但是由于他们同时也是5的倍数，在5那里已经贡献过一次了，这里只需要再贡献一次，以此类推即可，很容易求出某个阶乘末尾0的个数
+>
+> 但是这里数字范围很大，同时又很显然是个单调的答案假如5成立6肯定成立，但4不成立3一定不成立，所以可以用二分来做
 
-#### Code
+### Code
 
 ```c++
-class Solution {
-public:
-    int largestRectangleArea(vector<int>& heights) {
-        int n = heights.size();
-        vector<int> l(n, -1), r(n, n);
-        stack<int> s;
-        for (int i = 0; i < n; ++i) {
-            while (s.size() && heights[i] <= heights[s.top()]) {
-                r[s.top()] = i;
-                s.pop();
-            }
-            if (s.size()) l[i] = s.top();
-            s.push(i);
+#include <bits/stdc++.h>
+
+using namespace std;
+
+using ll = long long;
+
+int main()
+{
+    ll k;
+    cin >> k;
+    ll ans = -1;
+    ll l = 1, r = 1e19;
+    auto check = [&] (ll x) {
+        ll cnt = 0;
+        ll ssr = 5;
+        while (ssr <= x) {
+            cnt += x / ssr;
+            ssr *= 5;
         }
-        int ma = 0;
-        for (int i = 0; i < n; ++i) {
-            int h = heights[i], le = l[i] + 1, re = r[i] - 1;
-            ma = max(ma, h * (re - le + 1));
+        return cnt;
+    };
+    while (l <= r) {
+        ll m = l + (r - l + 1 >> 1);
+        ll t = check(m);
+        if (t >= k) {
+            if (t == k) ans = m;
+            r = m - 1;
         }
-        return ma;
+        else l = m + 1;
     }
-};
+    cout << ans << endl;
+    return 0;
+}
+```
+
+### 吐槽
+
+> 这题数字给的特别大，最终的右区间要取一个很大的值，我这里自信取了1e18，被卡了woc
+>
+> 结果取1e19就能过
+
+---
+
+## 例题——分巧克力
+
+> Problem[分巧克力]([P1323 - [蓝桥杯2017初赛\]分巧克力 - New Online Judge (ecustacm.cn)](http://oj.ecustacm.cn/problem.php?id=1323))
+
+### 思路
+
+> 我们想求出当前的巧克力可以分出多少个指定大小的巧克力可以直接用长和宽整除对应的边长，然后相乘来算出数量，这里只需要找到最小满足的即可，很显然答案满足单调性，可以通过二分来加快查找
+
+### Code
+
+```c++
+#include <bits/stdc++.h>
+
+using namespace std;
+
+using ll = long long;
+
+const int N = 1e5 + 7;
+
+int n, k;
+ll h[N], w[N];
+
+bool check(ll x)
+{
+    ll num = 0;
+    for (int i = 0; i < n; ++i) {
+        num += (h[i] / x) * (w[i] / x);
+        if (num >= k) return true;
+    }
+    return num >= k;
+}
+
+void solve()
+{
+    cin >> n >> k;
+    for (int i = 0; i < n; ++i) scanf("%lld%lld", &h[i], &w[i]);
+    ll l = 1, r = N;
+    while (l <= r) {
+        ll m = l + (r - l + 1 >> 1);
+        if (check(m)) l = m + 1;
+        else r = m - 1;
+    }
+    cout << r << endl;
+}
+
+int main()
+{
+    solve();
+    return 0;
+}
+```
+
+### 细节
+
+> 这里算个数的时候，两个分别整除完再相乘，否则由于是整除答案会出错
+
+---
+
+## 例题——青蛙过河
+
+> Problem:[青蛙过河]([P2026 - [蓝桥杯2022初赛\] 青蛙过河 - New Online Judge (ecustacm.cn)](http://oj.ecustacm.cn/problem.php?id=2026))
+
+### 思路
+
+> 这题的关键在于判断青蛙在某一跳跃能力的情况下能否过河，实际上只需要保证在跳跃能力为k的情况下，每k个相邻的石头高度和不小于2x即可。
+>
+> 我们可以将每k块区域看成一个整体，总共有2x只青蛙，我们只需要判断每个[l, l + k - 1]，到下一个区间[l + 1, l + k]是否都能成功就行，慢慢到终点，这样在满足要求的情况下一定能过河
+
+### Code
+
+```c++
+#include <bits/stdc++.h>
+
+using namespace std;
+
+using ll = long long;
+
+const int N = 1e5 + 7;
+
+ll n, x;
+ll a[N];
+
+bool check(ll p)
+{
+    ll sum = 0;
+    int i;
+    for (i = 0; i < p; ++i) sum += a[i];
+    while (i < n) {
+        if (sum < x) return false;
+        sum += a[i];
+        sum -= a[i - p];
+        ++i;
+    }
+    return sum >= x;
+}
+
+void solve()
+{
+    cin >> n >> x;
+    --n;
+    x <<= 1;
+    for (int i = 0; i < n; ++i) scanf("%lld", &a[i]);
+    ll l = 1, r = n + 1;
+    while (l <= r) {
+        int m = l + (r - l + 1 >> 1);
+        if (check(m)) r = m - 1;
+        else l = m + 1;
+    }
+    cout << l << endl;
+}
+
+int main()
+{
+    solve();
+    return 0;
+}
 ```
 
 ---
 
-## 例题——好子数组的最大分数
+## 例题——技能升级
 
-> Problem: [1793. 好子数组的最大分数](https://leetcode.cn/problems/maximum-score-of-a-good-subarray/description/)
-
-### 思路1——前后缀拆分+二分
-
-> 这是我最原始的思路，这题是以k为中心往两边扩展的，所以我们从k开始分别向前后扩展寻找某一长度下子数组的最小值，很显然这俩数组一定是单调的，于是我们可以通过二分在短时间内获得以某个值为最小值的左边界和右边界，总共的取值只有1e5个，而每次判断只有Logn，我们可以通过这种方式来枚举出答案
-
-#### Code
-
-```c++
-class Solution {
-public:
-    int maximumScore(vector<int>& nums, int k) {
-        vector<int> pre, suf;
-        unordered_set<int> ssr; 
-        int n = nums.size();
-        pre.emplace_back(nums[k]);
-        suf.emplace_back(nums[k]);
-        ssr.insert(nums[k]);
-        for (int i = k - 1; i >= 0; --i) pre.emplace_back(min(pre.back(), nums[i])), ssr.insert(nums[i]);
-        for (int i = k + 1; i < n; ++i) suf.emplace_back(min(suf.back(), nums[i])), ssr.insert(nums[i]);
-        int ans = 0;
-        auto Find = [&] (int x, vector<int>& a) {
-            int l = 0, r = a.size() - 1;
-            while (l <= r) {
-                int m = l + r >> 1;
-                if (a[m] >= x) l = m + 1;
-                else r = m - 1;
-            }
-            return r;
-        };
-        for (int x: ssr) {
-            int l = Find(x, pre), r = Find(x, suf);
-            int len = 1 + l + r;
-            ans = max(ans, x * len);
-        }
-        return ans;
-    }
-};
-```
+> Problem:[技能升级]([P2047 - [蓝桥杯2022初赛\] 技能升级 - New Online Judge (ecustacm.cn)](http://oj.ecustacm.cn/problem.php?id=2047))
 
 ---
 
-### 思路2——双指针
+### 思路
 
-> 其实这题的最优解应该是双指针，思路依旧是从k开始向两边扩展，用l和r来做左右边界的指针进行扩展，每次枚举当前区间的最小值，将这个最小值慢慢往下降来扩张区间，虽然看起来好像要遍历很多数字，实际上这俩指针跑到头也就听了所以时间复杂度也就O(n + m)，也就是取长度和数值范围的最大值
+> 这题一眼优先队列贪心着做，但是一看数据发现最多加m次，而m最大为2e9，这可过不去，所以放弃无脑贪心
+>
+> 再转念一想，其实每次我们都会挑当前技能中点数最高的去加，这就是优先队列的贪心思路，这也就说明我们最后一次增加的点数一定是所有之前增加的点数中最小的，所以我们枚举最小的点数即可，只要达到一个最小的点数刚好能把m次用完那就肯定是最大的了
+>
+> 由于值越小，使用的次数肯定越多，这个判断是符合单调的，我们可以用二分来加速枚举过程，这样2e9也不在话下
 
-#### Code
-
-```c++
-class Solution {
-public:
-    int maximumScore(vector<int>& nums, int k) {
-        int ma = nums[k];
-        int ans = ma;
-        int l = k - 1, r = k + 1;
-        int n = nums.size();
-        while (l >= 0 || r < n) {
-            while (l >= 0 && nums[l] >= ma) --l;
-            while (r < n && nums[r] >= ma) ++r;
-            int len = r - l - 1;
-            ans = max(ans, len * ma);
-            --ma;
-        }
-        return ans;
-    }
-};
-```
-
----
-
-#### 优化——跳转优化
-
-> 在上述双指针枚举数值的过程中，跳转上其实挺花时间的，有些大于左右边界的值被枚举从而浪费了时间，其实可以直接往左右边界的最大值进行跳转，省去那些没用的时间，保证每一步都有指针移动，时间复杂度优化为O(n)
-
-##### Code
+### Code
 
 ```c++
-class Solution {
-public:
-    int maximumScore(vector<int>& nums, int k) {
-        int ma = nums[k];
-        int ans = ma;
-        int l = k - 1, r = k + 1;
-        int n = nums.size();
-        while (l >= 0 || r < n) {
-            while (l >= 0 && nums[l] >= ma) --l;
-            while (r < n && nums[r] >= ma) ++r;
-            int len = r - l - 1;
-            ans = max(ans, len * ma);
-            int ssr = l >= 0 ? nums[l] : 0;
-            ssr = r < n ? max(ssr, nums[r]) : ssr;
-            ma = ssr ? ssr : ma - 1;
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+using ll = long long;
+ 
+const int N = 1e5 + 7;
+ 
+ll n, m;
+ll a[N], b[N];
+ 
+ll ans = 0;
+ 
+bool check(ll k)
+{
+    ll t = 0;
+    for (int i = 0; i < n; ++i) {
+        if (a[i] >= k) {
+            ll tmp = (a[i] - k) / b[i] + 1;
+            t += tmp;
+            if (t > m) return true;
         }
-        return ans;
     }
-};
+    return false;
+}
+ 
+void solve()
+{
+    // freopen("in.txt", "r", stdin);
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) scanf("%lld%lld", &a[i], &b[i]);
+    ll l = 1, r = 1e10;
+    while (l <= r) {
+        ll m = l + (r - l + 1 >> 1);
+        if (check(m)) l = m + 1;
+        else r = m - 1;
+    }
+    
+    for (int i = 0; i < n; ++i) {
+        if (a[i] >= l) {
+            ll tmp = a[i] - l;
+            tmp /= b[i];
+            ++tmp;
+            if (a[i] - b[i] * (tmp - 1) == r) tmp - 1;
+            m -= tmp;
+            ans += (a[i] + a[i] - b[i] * (tmp - 1)) * tmp >> 1;
+        }
+    }
+    cout << ans + m * r << endl;
+}
+
+int main()
+{
+    solve();
+    return 0;
+}
 ```
 
----
+### 设计细节
 
-### 思路3——前后缀分离+单调栈
-
-> 这题依旧可以延续柱状图矩形中前后缀分离+单调栈的思路，只需要多加一步判断来确定边界是否合理即可
-
-#### Code
-
-```c++
-class Solution {
-public:
-    int maximumScore(vector<int>& nums, int k) {
-        int n = nums.size();
-        vector<int> l(n, -1), r(n, n);
-        stack<int> ssr;
-        for (int i = 0; i < n; ++i) {
-            while (ssr.size() && nums[i] <= nums[ssr.top()]) {
-                r[ssr.top()] = i;
-                ssr.pop();
-            }
-            if (ssr.size()) l[i] = ssr.top();
-            ssr.emplace(i);
-        }
-        int ma = 0;
-        for (int i = 0; i < n; ++i) {
-            int v = nums[i], le = l[i] + 1, re = r[i] - 1;
-            if (le <= k && re >= k) ma = max(ma, v * (re - le + 1));
-        }
-        return ma;
-    }
-};
-```
+> 这里我们要求得的最后答案是尽量用完m次，也就是总次数小于等于m的最小次数，所以我们check可以反着来，找出最小的大于m次的r，此时的l不满足条件，也就是l就是最大的小于等于m
+>
+> 最后我们计算答案的时候最后再处理边界值，因为这个值是最小的，可以用来做保底替补，而不要先加了
 

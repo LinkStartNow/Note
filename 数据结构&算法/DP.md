@@ -1048,7 +1048,7 @@ public:
 };
 ```
 
-## 用最少数量的箭引爆气球
+## 例题——用最少数量的箭引爆气球
 
 > Problem: [452. 用最少数量的箭引爆气球](https://leetcode.cn/problems/minimum-number-of-arrows-to-burst-balloons/description/)
 
@@ -1076,6 +1076,52 @@ public:
             }
         }
         return ans;
+    }
+};
+```
+
+---
+
+## 例题——规划兼职工作
+
+> Problem: [1235. 规划兼职工作](https://leetcode.cn/problems/maximum-profit-in-job-scheduling/description/)
+
+### 思路
+
+> 这题其实就是一眼动态规划的题目，然后由于区间有先后，排序后更容易通过二分选取合适的插入位置，同时看了一眼数据量暴力n^2确实过不去，肯定考虑通过二分来优化
+
+### 解决
+
+> 这里我们考虑设计一个dp数组，dp[i]表示考虑到第i个元素所能获得的最大价值，我们先根据结尾时间来排序，然后通过二分找到最后一个可能的时间下标（也就是结束时间早于当前开始时间的最晚时间元素），则我们对当前位置可以有选或不选两种选择，不选则直接通过dp[i - 1]来转移，选则通过dp[k] + profit[i]来转移，二者取最大值即可
+
+### Code
+
+```c++
+class Solution {
+    using tii = tuple<int, int, int>;
+public:
+    int jobScheduling(vector<int>& startTime, vector<int>& endTime, vector<int>& profit) {
+        int n = startTime.size();
+        vector<tii> v;
+        for (int i = 0; i < n; ++i) v.emplace_back(endTime[i], startTime[i], profit[i]);
+        sort(v.begin(), v.end());
+        vector<int> dp(n + 1);
+        auto find = [&] (const int& time) {
+            int l = 0, r = n - 1;
+            int ans = -1;
+            while (l <= r) {
+                int m = l + r >> 1;
+                if (get<0>(v[m]) > time) r = m - 1;
+                else l = m + 1, ans = m;
+            }
+            return ans;
+        };
+        for (int i = 0; i < n; ++i) {
+            int time = find(get<1>(v[i]));
+            if (time != -1) dp[i] = max(dp[time] + get<2>(v[i]), dp[i - 1]);
+            else dp[i] = max(get<2>(v[i]), i ? dp[i - 1] : 0);
+        }
+        return dp[n - 1];
     }
 };
 ```
