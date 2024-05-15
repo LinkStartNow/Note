@@ -976,6 +976,132 @@ public:
 };
 ```
 
+---
+
+# 例题——珠宝的最高价值
+
+> Problem: [LCR 166. 珠宝的最高价值](https://leetcode.cn/problems/li-wu-de-zui-da-jie-zhi-lcof/description/)
+
+## 说明
+
+> 这题非常的easy，就是个经典的dp问题，这里主要探讨的是如何优化空间
+>
+> 时间复杂度都是`O(mn)`也就是遍历完整个图，优化的都是空间部分
+
+## 初代递推——无优化
+
+> 我们可以直接通过`dp[i][j]`来记录到达从左上角到`[i][j]`所能获得的最大价值，因为只能向右和下移动，所以我们通过上一个和左边一个取最大值来转移即可
+>
+> 空间复杂度：`O(mn)`
+
+### Code
+
+```c++
+class Solution {
+public:
+    int jewelleryValue(vector<vector<int>>& frame) {
+        int n = frame.size(), m = frame[0].size();
+        vector<vector<int>> dp(n, vector<int>(m, 0));
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                if (j) dp[i][j] = dp[i][j - 1];
+                if (i) dp[i][j] = max(dp[i][j], dp[i - 1][j]);
+                dp[i][j] += frame[i][j];
+            }
+        }
+        return dp[n - 1][m - 1];
+    }
+};
+```
+
+---
+
+## 优化1——滚动数组
+
+> 由于，我们只依赖于当前层左边和上一层的数据，所以我们其实只需要两层就可以完成同样的功能
+>
+> 空间复杂度：`O(2m)`，也就是`O(m)`
+
+### Code
+
+```c++
+class Solution {
+public:
+    int jewelleryValue(vector<vector<int>>& frame) {
+        int n = frame.size(), m = frame[0].size();
+        vector<vector<int>> dp(2, vector<int>(m, 0));
+        for (int i = 0; i < n; ++i) {
+            int k = i % 2, ssr = k ^ 1;
+            for (int j = 0; j < m; ++j) {
+                if (j) dp[k][j] = dp[k][j - 1];
+                dp[k][j] = max(dp[k][j], dp[ssr][j]);
+                dp[k][j] += frame[i][j];
+            }
+        }
+        return dp[(n - 1) % 2][m - 1];
+    }
+};
+```
+
+----
+
+## 优化2——一维数组
+
+> 其实我们依赖于上一层的元素`dp[i - 1][j]`只是为了更新`dp[i][j]`，于是我们其实可以将新的`dp[i][j]`的值覆盖到原本位置上，这样我们就只需要一维数组即可实现同样功能
+>
+> 空间复杂度：`O(m)`，单纯就一层
+
+### Code
+
+```c++
+class Solution {
+public:
+    int jewelleryValue(vector<vector<int>>& frame) {
+        int n = frame.size(), m = frame[0].size();
+        vector<int> dp(m);
+        dp[0] = frame[0][0];
+        for (int i = 1; i < m; ++i) dp[i] = frame[0][i] + dp[i - 1];
+        for (int i = 1; i < n; ++i) {
+            dp[0] += frame[i][0];
+            for (int j = 1; j < m; ++j) {
+                dp[j] = max(dp[j], dp[j - 1]) + frame[i][j];
+            }
+        }
+        return dp[m - 1];
+    }
+};
+```
+
+---
+
+## 优化3——原地修改
+
+> 其实我们可以注意到原本提供的数组也有同样的大小，我们不用开辟新的空间就能实现同样功能
+>
+> 空间复杂度：`O(1)`
+
+```c++
+class Solution {
+public:
+    int jewelleryValue(vector<vector<int>>& frame) {
+        int n = frame.size(), m = frame[0].size();
+        // vector<int> dp(m);
+        // dp[0] = frame[0][0];
+        auto& dp = frame[0];
+        for (int i = 1; i < m; ++i) dp[i] += dp[i - 1];
+        for (int i = 1; i < n; ++i) {
+            dp[0] += frame[i][0];
+            for (int j = 1; j < m; ++j) {
+                dp[j] = max(dp[j], dp[j - 1]) + frame[i][j];
+            }
+        }
+        return dp[m - 1];
+    }
+};
+```
+
+---
+
 # 区间集合
 
 ## 例题——无重叠区间
