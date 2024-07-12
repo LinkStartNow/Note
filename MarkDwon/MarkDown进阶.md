@@ -36,6 +36,8 @@
 
 # 数学
 
+[方便查询]([使用Markdown语法编写数学公式（详细版）_markdown写公式-CSDN博客](https://blog.csdn.net/wzk4869/article/details/126863936))
+
 ## 公式
 
 ### 行中公式
@@ -221,3 +223,52 @@ $$
 $$
 \prod_{i=50}^{100}{\sqrt i}
 $$
+
+---
+
+## 分段函数
+
+> 语法：用`\begin{cases}`和`\end{cases}`来构造分段函数，中间则用`\\`来分段
+>
+> 这边的条件对齐可以用按位与&来连接哦
+
+举例：
+$$
+f(x) = 
+ \begin{cases}
+ 2x & x < 0 \\
+ \frac 1 x &x\ge0
+ \end{cases}
+$$
+
+---
+
+## 等号对齐&梯等式
+
+> 语法：用`\begin{aligned}`和`\end{aligned}`来构造分段函数，中间则用`\\`来分段
+>
+> 对于要控制的等号前面用一个按位与
+
+这是不用等号控制：
+$$
+\begin{aligned}
+a=b*c*d \\
+a=d
+\end{aligned}
+$$
+这是用等号对齐控制：
+$$
+\begin{aligned}
+a&=b*c*d \\
+a&=d
+\end{aligned}
+$$
+把等号左侧的内容去除就变成梯等式啦！
+$$
+\begin{aligned}
+a&=b*c*d \\
+&=d
+\end{aligned}
+$$
+
+

@@ -1,5 +1,142 @@
 众所周知DP是比较抽象的，比较不好总结，所以我们先以例题为例
 
+# LCR砍竹子
+
+> Problem: [LCR 131. 砍竹子 I](https://leetcode.cn/problems/jian-sheng-zi-lcof/description/)
+
+## 思路1——动态规划
+
+> 我们要获取数字n拆分成多个数字的和的最大乘积，那么我们可以去考虑如何分
+>
+> 对于数字`n`，我们可以分成不考虑再分的`i`和剩余部分`n-i`，剩余部分`n-i`也是去求取能算出的最大积，同样的子问题，范围减小了，于是可以通过动态规划来解决
+
+### Code
+
+```c++
+class Solution {
+    vector<int> dp;
+    int n;
+
+    int find(int x)
+    {
+        int& ssr = dp[x];
+        if (ssr) return ssr;
+        for (int i = 2; i <= (x >> 1); ++i) ssr = max(ssr, i * find(x - i));
+        return ssr;
+    }
+
+public:
+    int cuttingBamboo(int bamboo_len) {
+        n = bamboo_len;
+        dp.resize(bamboo_len + 1, 0);
+        dp[1] = 1, dp[2] = 2, dp[3] = 3;
+        if (bamboo_len == 2) return 1;
+        else if (bamboo_len == 3) return 2;
+        return find(n);
+    }
+};
+```
+
+---
+
+### 递归转递推
+
+> 因为大的数依赖于小的数，所以顺着推即可
+
+```c++
+class Solution {
+public:
+    int cuttingBamboo(int bamboo_len) {
+        if (bamboo_len == 2) return 1;
+        else if (bamboo_len == 3) return 2;
+        vector<int> dp(bamboo_len + 1, 0);
+        dp[1] = 1, dp[2] = 2, dp[3] = 3;
+        for (int x = 4; x <= bamboo_len; ++x) {
+            for (int i = 2; i <= (x >> 1); ++i) 
+                dp[x] = max(dp[x], i * dp[x - i]);
+        }
+        return dp[bamboo_len];
+    }
+};
+```
+
+## 思路2——数学贪心
+
+> 数字能拆尽量拆，因为乘积一般都比和大，最终拆的边界也就是2和3，拆到1就白拆了
+>
+> 根据数学证明，3比2更优，于是优先拆3，最后看余数，如果是0则直接全拆成3；如果为1，那么去掉一个3凑4；如果是2，那么也直接乘2
+
+### Code
+
+```c++
+class Solution {
+    using ll = long long;
+    int mypow(ll x, int y)
+    {
+        long long res = 1;
+        while (y) {
+            if (y & 1) res *= x;
+            x *= x;
+            y >>= 1;
+        }
+        return res;
+    }
+public:
+    int cuttingBamboo(int bamboo_len) {
+        if (bamboo_len <= 3) return bamboo_len - 1;
+        int x = bamboo_len % 3, y = bamboo_len / 3;
+        if (x == 2) return mypow(3, y) * 2;
+        else if (x == 1) return mypow(3, y - 1) * 4;
+        return mypow(3, y);
+    }
+};
+```
+
+---
+
+## 难度升级——LCR砍竹子2
+
+> Problem: [LCR 132. 砍竹子 II](https://leetcode.cn/problems/jian-sheng-zi-ii-lcof/description/)
+
+### 思路
+
+> 对于新修改数据范围后的砍竹子，动态规划已经不适用了，因为在求取的过程中状态答案非常的大，`long long`都装不下，如果我们强行对状态进行取模运算，则会导致最终结果出错，因为取模和取最大值无法一起使用，例如：
+> $$
+> max(6 \% 8, 9 \% 8) = max(6, 1) = 1 \\
+> 然而实际结果确为：
+> max(6, 9) \% 8 = 9 \% 8 = 1
+> $$
+> 所以我们只能采用贪心的解法，最后求幂可以用快速幂来优化加速
+
+### Code
+
+```c++
+class Solution {
+    using ll = long long;
+    const int mod = 1000000007;
+    ll mypow(ll x, int y)
+    {
+        ll res = 1;
+        while (y) {
+            if (y & 1) res = x * res % mod;
+            x = x * x % mod;
+            y >>= 1;
+        }
+        return res;
+    }
+public:
+    int cuttingBamboo(int bamboo_len) {
+        if (bamboo_len <= 3) return bamboo_len - 1;
+        int x = bamboo_len % 3, y = bamboo_len / 3;
+        if (x == 2) return mypow(3, y) * 2 % mod;
+        else if (x == 1) return mypow(3, y - 1) * 4 % mod;
+        return mypow(3, y) % mod;
+    }
+};
+```
+
+---
+
 # 例题——卖木头块
 
 > Problem: [2312. 卖木头块](https://leetcode.cn/problems/selling-pieces-of-wood/description/)
@@ -1008,7 +1145,7 @@ public:
 
 ---
 
-# 例题——珠宝的最高价值
+# LCR珠宝的最高价值
 
 > Problem: [LCR 166. 珠宝的最高价值](https://leetcode.cn/problems/li-wu-de-zui-da-jie-zhi-lcof/description/)
 
@@ -1681,6 +1818,383 @@ public:
 };
 ```
 
+---
+
+### 给墙壁刷油漆
+
+> Problem: [2742. 给墙壁刷油漆](https://leetcode.cn/problems/painting-the-walls/description/)
+
+#### 思路
+
+> 我们对于最终的方案，肯定满足：
+> $$
+> \begin{cases}
+> 免费个数<=付费时间 \\
+> 免费个数=n-付费个数
+> \end{cases}
+> $$
+> 所以$n-付费个数<=付费时间$
+>
+> 移项可得：$n <= \sum(付费时间+1)$
+>
+> 所以我们的问题就抽象成了使时间不小于n的最小开销，我们可以构造一个01背包：
+>
+> `dp[i][j]`表示考虑前i个物品空间为j的情况下最小开销
+>
+> 状态转移方程为：
+> $$
+> dp[i][j]=
+> \begin{cases}
+> 0 & j <= 0 \\
+> +\infty & i < 0 \\
+> \min(dp[i - 1][j], dp[i - 1][j - time[i]] + cost[i]) & others
+> \end{cases}
+> $$
+
+#### Code
+
+```c++
+class Solution {
+    vector<vector<int>> dp;
+
+    int dfs(int k, int time_need, const vector<int>& cost, const vector<int>& time)
+    {
+        if (time_need <= 0) return 0;
+        if (k < 0) return 1e9 / 2;
+        int& ssr = dp[k][time_need];
+        if (ssr != -1) return ssr;
+        return ssr = min(dfs(k - 1, time_need - time[k] - 1, cost, time) + cost[k], dfs(k - 1, time_need, cost, time));
+    }
+
+public:
+    int paintWalls(vector<int>& cost, vector<int>& time) {
+        int n = cost.size();
+        dp.resize(n, vector<int>(n + 1, -1));
+        return dfs(n - 1, n, cost, time);
+    }
+};
+```
+
+----
+
+#### 优化
+
+> 优化部分就是01背包的基操了，01背包一般都可以这么优化
+
+##### 递归转递推
+
+```c++
+class Solution {
+    vector<vector<int>> dp;
+public:
+    int paintWalls(vector<int>& cost, vector<int>& time) {
+        int n = cost.size();
+        dp.resize(n + 1, vector<int>(n + 1, 1e9));
+        
+        dp[0][0] = 0;
+        for (int k = 0; k < n; ++k) {
+            for (int t = 0; t <= n; ++t) {
+                dp[k + 1][t] = dp[k][t];
+                int ssr = t >= time[k] + 1 ? dp[k][t - time[k] - 1] : 0;
+                dp[k + 1][t] = min(dp[k + 1][t], ssr + cost[k]);
+            }
+        }
+        return dp[n][n];
+    }
+};
+```
+
+---
+
+##### 空间优化——翻转数组
+
+```c++
+class Solution {
+    vector<vector<int>> dp;
+
+public:
+    int paintWalls(vector<int>& cost, vector<int>& time) {
+        int n = cost.size();
+        dp.resize(2, vector<int>(n + 1, 1e9));
+        
+        dp[0][0] = 0;
+        for (int k = 0; k < n; ++k) {
+            int y = k % 2;
+            int z = y ^ 1;
+            for (int t = 0; t <= n; ++t) {
+                dp[z][t] = dp[y][t];
+                int ssr = t >= time[k] + 1 ? dp[y][t - time[k] - 1] : 0;
+                dp[z][t] = min(dp[z][t], ssr + cost[k]);
+            }
+        }
+        return dp[n % 2][n];
+    }
+};
+```
+
+---
+
+##### 空间再优化——一维数组
+
+```c++
+class Solution {
+    vector<int> dp;
+
+public:
+    int paintWalls(vector<int>& cost, vector<int>& time) {
+        int n = cost.size();
+        dp.resize(n + 1, 1e9);
+        
+        dp[0] = 0;
+        for (int k = 0; k < n; ++k) {
+            for (int t = n; t >= 0; --t) {
+                int ssr = t >= time[k] + 1 ? dp[t - time[k] - 1] : 0;
+                dp[t] = min(dp[t], ssr + cost[k]);
+            }
+        }
+        return dp[n];
+    }
+};
+```
+
+---
+
+### 目标和
+
+> Problem: [494. 目标和](https://leetcode.cn/problems/target-sum/description/)
+
+#### 思路
+
+> 对于每一个数我们可以考虑选不选，我们定义`find(target, k)`表示考虑到第k个数时能凑到`target`的方案数，则很好推出状态转移方程
+> $$
+> find(target, k) =
+> \begin{cases}
+> target == 0 & k == n \\
+> find(target + nums[k], k + 1) + find(target - nums[k], k + 1) & others
+> \end{cases}
+> $$
+> 有了状态转移方程就可以直接莽着出答案了
+
+#### Code
+
+```c++
+class Solution {
+    int n;
+    int find(int target, int k, const vector<int>& nums)
+    {
+        if (k == n) {
+            return target == 0;
+        }
+        return find(target - nums[k], k + 1, nums) + find(target + nums[k], k + 1, nums);
+    }
+
+public:
+    int findTargetSumWays(vector<int>& nums, int target) {
+        n = nums.size();
+        return find(target, 0, nums);
+    }
+};
+```
+
+---
+
+#### 优化——记忆化搜索
+
+> 虽然刚刚几行代码就结束了这个问题，但是能过是因为题目给的数据范围非常的小，其实我们是有很多的重复计算的，这些部分我们可以用记忆化搜索来减去重复计算的部分
+>
+> 定义的记忆化数组根据递归函数的参数来即可，一一对应
+>
+> 这里没有多想，直接暴力将数组开到可能的最大，把负数完全加成非负数，以免下标越界
+
+##### Code
+
+```c++
+class Solution {
+    int n;
+    vector<vector<int>> dp;
+    int find(int target, int k, const vector<int>& nums)
+    {
+        int& ssr = dp[k][target + 20000];
+        if (ssr != -1) return ssr;
+        if (k == n) {
+            return ssr = target == 0;
+        }
+        return ssr = find(target - nums[k], k + 1, nums) + find(target + nums[k], k + 1, nums);
+    }
+
+public:
+    int findTargetSumWays(vector<int>& nums, int target) {
+        n = nums.size();
+        dp.resize(n + 1, vector<int>(40003, -1));
+        return find(target, 0, nums);
+    }
+};
+```
+
+---
+
+#### 优化2——01背包转思路
+
+> 其实这题的思路已经很接近一个01背包问题了，01背包就是关于取或不取对最后价值的关系影响，这题很容易看出来是要选取其中某几个物品最终达到指定的空间。
+>
+> 那么难点其实就在怎么优化这个空间，使得空间尽量不要浪费
+>
+> 我们定义：
+> $$
+> s=所有数的和 \\
+> p=所有取正的数的和 \\
+> q=所有取负的数的和 \\
+> $$
+> 那么就会有：
+> $$
+> \begin{cases}
+> s=p+q \\
+> target=p-q
+> \end{cases}
+> $$
+> 联立可得：
+> $$
+> \begin{cases}
+> p=\frac {s+target} {2} \\
+> q=\frac {s-target} {2}
+> \end{cases}
+> $$
+> 则很明显，我们既可以凑负数也可以凑正数结果都是一样的，因为除了取正的数剩余就是取负的数，为了最优，我们选取小的来凑，也就是$ssr = \frac {s - |target|} {2}$，不去考虑到底是选正的还是选负的
+>
+> 最终问题抽象成对于n个数每个数可以选或不选，最终凑得`ssr`即可
+>
+> 在处理的时候由于最终的ssr肯定是个整数，于是$(s-|target|) \% 2 == 0$，并且数组中的数全是非负数，如果$ssr < 0$那么也直接返回即可，这两种情况都是不可能的
+>
+> 思路上其实没有多大的变化，只是这么一想空间几乎被压缩到了极致
+
+##### Code
+
+```c++
+class Solution {
+    int n, m;
+    vector<vector<int>> dp;
+    int find(int target, int k, const vector<int>& nums)
+    {
+        if (target < 0) return 0;
+        int& ssr = dp[k][target];
+        if (ssr != -1) return ssr;
+        if (k == n) {
+            return ssr = target == 0;
+        }
+        return ssr = find(target - nums[k], k + 1, nums) + find(target, k + 1, nums);
+    }
+
+public:
+    int findTargetSumWays(vector<int>& nums, int target) {
+        n = nums.size();
+        m = reduce(nums.begin(), nums.end(), 0) - abs(target);
+        if (m < 0 || m % 2) return 0;
+        m >>= 1;
+        dp.resize(n + 1, vector<int>(m + 1, -1));
+        return find(m, 0, nums);
+    }
+};
+```
+
+----
+
+##### 递归转递推
+
+> 此时递归转递推也非常好转，将记忆化数组当成递推数组，然后按照归的过程正向即可完成递推
+
+###### Code
+
+```c++
+class Solution {
+    int n, m;
+    vector<vector<int>> dp;
+
+public:
+    int findTargetSumWays(vector<int>& nums, int target) {
+        n = nums.size();
+        m = reduce(nums.begin(), nums.end(), 0) - abs(target);
+        if (m < 0 || m % 2) return 0;
+        m >>= 1;
+        dp.resize(n + 1, vector<int>(m + 1, 0));
+        dp[n][0] = 1;
+        for (int k = n - 1; k >= 0; --k) {
+            for (int target = 0; target <= m; ++target) {
+                dp[k][target] = dp[k + 1][target];
+                if (target >= nums[k]) dp[k][target] += dp[k + 1][target - nums[k]];
+            }
+        }
+        return dp[0][m];
+    }
+};
+```
+
+---
+
+##### 空间优化——翻转数组
+
+> 01背包基操，不谈。很明显只依赖于两层，翻转着能省掉剩余的空间
+
+###### Code
+
+```c++
+class Solution {
+    int n, m;
+    vector<vector<int>> dp;
+
+public:
+    int findTargetSumWays(vector<int>& nums, int target) {
+        n = nums.size();
+        m = reduce(nums.begin(), nums.end(), 0) - abs(target);
+        if (m < 0 || m % 2) return 0;
+        m >>= 1;
+        dp.resize(2, vector<int>(m + 1, 0));
+        dp[n % 2][0] = 1;
+        for (int k = n - 1; k >= 0; --k) {
+            int ssr = k % 2;
+            int z = ssr ^ 1;
+            for (int target = 0; target <= m; ++target) {
+                dp[ssr][target] = dp[z][target];
+                if (target >= nums[k]) dp[ssr][target] += dp[z][target - nums[k]];
+            }
+        }
+        return dp[0][m];
+    }
+};
+```
+
+---
+
+##### 空间再优化——一维数组
+
+> 同理基操，由于当前层只依赖于上一层，而且都是左上角的数据，于是用一维数组反向遍历的方式也能处理，这样不仅优化了空间，而且对于许多拷贝和计算的操作也省略了
+
+###### Code
+
+```c++
+class Solution {
+    int n, m;
+    vector<int> dp;
+
+public:
+    int findTargetSumWays(vector<int>& nums, int target) {
+        n = nums.size();
+        m = reduce(nums.begin(), nums.end(), 0) - abs(target);
+        if (m < 0 || m % 2) return 0;
+        m >>= 1;
+        dp.resize(m + 1, 0);
+        dp[0] = 1;
+        for (int k = n - 1; k >= 0; --k) {
+            for (int target = m; target >= nums[k]; --target) {
+                dp[target] += dp[target - nums[k]];
+            }
+        }
+        return dp[m];
+    }
+};
+```
+
+---
+
 ## 完全背包
 
 > 完全背包就是物品可以无限制的选取，解决这类题目的方法就是以当前层前面刚更新的新数据作为参考来转移
@@ -1803,6 +2317,203 @@ public:
 > 每次都去遍历上一层的每个状态是很浪费时间的，因为有很多位置根本不合理，比如安排人坐不能用的位置，或者左右相邻了。但其实我们在考虑当前行状态时已经判断完这个了，下一层的时候再回过头重新判断一遍实在是浪费，于是我们可以开一个vector来记录每一层合理的组合方案，可以大大节约时间。
 >
 > 在判断当前行某种搭配所能容纳的人数时，我们可以直接遍历每一位，当然也可以用lowbit直接开减（个人感觉可能会快些），虽然差不了多少，毕竟也就最多8位
+
+---
+
+## 优美的排列
+
+> Problem: [526. 优美的排列](https://leetcode.cn/problems/beautiful-arrangement/description/)
+
+### 思路
+
+> 我们可以一位一位"暴力"的尝试每个位置，比如总共5个数，p1此时填入了2，那么p2只能从除2以外的其他剩余数字中选取了，这样子我们尝试每个集合的剩余部分能有多少种组合即可，由于剩余部分我们对于如何排列的并不关心，只对于这个集合所能组成的排列数关心，所以这里可以记忆化搜索优化，避免多次计算
+>
+> 因为数据取值只有1-15，所以我们通过32位的int类型就能存储下各种的取值集合，这就可以通过位运算处理，也就是状态压缩，递归时传参也只需要传入集合即可，因为具体考虑到第几位可以通过集合中1的个数来获得
+>
+> 于是这个状态转移方程也就变成了：
+> $$
+> dfs(s)=
+> \begin{cases}
+> 1 & s == U \\
+> \sum_{i=1}^n dfs(s \cup i) & i \notin s,i \mod pos=0 \or pos \mod i = 0
+> \end{cases}
+> $$
+> 
+
+### 复杂度分析
+
+- 时间复杂度
+
+	由于记忆化搜索优化，所以每个状态只计算了一次
+	$$
+	时间复杂度=状态个数*每个状态处理的时间
+	$$
+	所以这里状态个数为$2^n$，每个状态处理的时间为$n$，所以总的时间复杂度为$O(2^nn)$
+
+- 空间复杂度
+
+	空间复杂度也就是这个记忆化数组的大小，为$O(2^n)$
+
+### Code
+
+```c++
+class Solution {
+    vector<int> dp;
+    int n;
+
+    inline int lowbit(int x)
+    {
+        return x & -x;
+    }
+
+    int dfs(int s)
+    {
+        if (dp[s] != -1) return dp[s];
+        int& ssr = dp[s];
+        ssr = 0;
+        int pos = 0, t = s;
+        while (t) ++pos, t -= lowbit(t);
+        if (pos == n) return ssr = 1;
+        ++pos;
+        for (int i = 1; i <= n; ++i) {
+            if ((s & (1 << (i - 1))) == 0 && ((pos % i == 0) || (i % pos == 0))) {
+                ssr += dfs(s | (1 << (i - 1)));
+            }
+        }
+        return ssr;
+    }
+public:
+    int countArrangement(int n) {
+        dp.resize(1 << n, -1);
+        this->n = n;
+        return dfs(0);
+    }
+};
+```
+
+---
+
+### 递归转递推
+
+> 只要将递归中递的部分给去掉，自底向上来推就能实现递推，也就是何时到递归的边界，那么就将其当做递推的入口来推
+>
+> 因为我们每次状态转移依赖的数肯定是当前位按位或上一个新的1的数，所以在递推枚举状态的时候从大到小一个个枚举即可
+
+#### Code
+
+```c++
+class Solution {
+    inline int lowbit(int x)
+    {
+        return x & -x;
+    }
+public:
+    int countArrangement(int n) {
+        vector<int> dp(1 << n, 0);
+        dp[(1 << n) - 1] = 1;
+        for (int s = (1 << n) - 2; s >= 0; --s) {
+            int t = s, pos = 0;
+            while (t) ++pos, t -= lowbit(t);
+            ++pos;
+            for (int i = 1; i <= n; ++i) {
+                if ((s & (1 << (i - 1))) == 0 && ((pos % i == 0) || (i % pos == 0))) {
+                    dp[s] += dp[s | (1 << (i - 1))];
+                }
+            }
+        }
+        return dp[0];
+    }
+};
+```
+
+---
+
+## 特别的排列
+
+> Problem: [2741. 特别的排列](https://leetcode.cn/problems/special-permutations/description/)
+
+### 思路
+
+> 相较于`优美的排列`，这题是相邻相关的取值问题，所以我们需要额外记录一下前一位取的是什么
+>
+> 这题的取值范围比较大，但是总的个数不多，所以可以按数组下标进行状态压缩，其他思路同理
+
+### Code
+
+```c++
+class Solution {
+    using ll = long long;
+    vector<vector<ll>> dp;
+    int n;
+    const int mod = 1e9 + 7;
+
+    inline int lowbit(int x) 
+    {
+        return x & -x;
+    }
+
+    ll dfs(int s, int pre, const vector<int>& nums)
+    {
+        auto& ssr = dp[s][pre];
+        if (ssr != -1) return ssr;
+        ssr = 0;
+        int t = s, pos = 0;
+        while (t) ++pos, t -= lowbit(t);
+        if (pos == n) return ssr = 1;
+        ++pos;
+        for (int i = 0; i < n; ++i) {
+            if ((s & (1 << i)) == 0 && (pre == n || nums[i] % nums[pre] == 0 || nums[pre] % nums[i] == 0)) {
+                ssr = (ssr + dfs(s | (1 << i), i, nums)) % mod;
+            }
+        }
+        return ssr;
+    }
+
+public:
+    int specialPerm(vector<int>& nums) {
+        n = nums.size();
+        dp.resize(1 << n, vector<ll>(n + 1, -1));
+        return dfs(0, n, nums);
+    }
+};
+```
+
+### 递归转递推
+
+```c++
+class Solution {
+    using ll = long long;
+    vector<vector<ll>> dp;
+    int n;
+    const int mod = 1e9 + 7;
+
+    inline int lowbit(int x) 
+    {
+        return x & -x;
+    }
+
+public:
+    int specialPerm(vector<int>& nums) {
+        n = nums.size();
+        dp.resize(1 << n, vector<ll>(n, 0));
+        for (int i = 0; i < n; ++i) dp[(1 << n) - 1][i] = 1;
+        for (int s = (1 << n) - 2; s; --s) {
+            for (int pre = 0; pre < n; ++pre) {
+                if ((s & (1 << pre)) == 0) continue;
+                for (int i = 0; i < n; ++i) {
+                    if ((s & (1 << i)) == 0 && (nums[i] % nums[pre] == 0 || nums[pre] % nums[i] == 0)) {
+                        dp[s][pre] += dp[s | (1 << i)][i];
+                    }
+                }
+            }
+        }
+
+        ll ans = 0;
+        for (int i = 0; i < n; ++i) ans += dp[1 << i][i];
+        return ans % mod;
+    }
+};
+```
 
 ---
 
