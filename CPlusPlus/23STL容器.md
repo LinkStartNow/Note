@@ -1093,6 +1093,84 @@ int main()
 
 ---
 
+## 优先队列（priority_queue）
+
+默认情况下为大顶堆，但是多数情况下我们可能想获得小顶堆，我们可以自定义规则来设置小顶堆，一般就是设置模板的第三个参数，原本默认为less，我们改为greater即可（当然传入负数也行，就是倒过来倒过去容易弄糊涂）
+
+```c++
+priority_queue<int, vector<int>, greater<int>>  q3;
+q3.emplace(233);
+q3.emplace(2333);
+cout << q3.top() << endl;  // 233
+```
+
+---
+
+### 自定义类型
+
+大多数情况下，我们还会用到自定义的类型，将多个类型绑定在一块。这里我们推荐一种最简洁的写法，那就是在自定义类内部重载小于号，默认依旧是大顶堆
+
+**注意：这里重载的时候，两个const都不能省略！！！**
+
+```C++
+#include <bits/stdc++.h>
+
+using namespace std;
+
+struct yyds
+{
+  string name;
+  int val;
+
+  yyds(string name, int val): name(name), val(val) {}
+
+  bool operator<(const yyds& other) const {
+    return val < other.val;
+  }
+};
+
+int main()
+{
+  priority_queue<yyds> q2;
+  q2.emplace("yyds", 233);
+  q2.emplace("ni", 2333);
+  cout << q2.top().name << endl; // ni
+
+  return 0;
+}
+```
+
+---
+
+或者我们也可以采用传入比较函数的方式，这里我们可以用lambda表达式配合decltype关键字来简化编程，我们在其中传入的参数此时就不要求一定const了
+
+```c++
+#include <bits/stdc++.h>
+
+using namespace std;
+
+struct yyds {
+    int val;
+
+    yyds(int val): val(val) {}
+};
+
+int main()
+{
+    auto cmp = [] (yyds a, yyds b) {
+        return a.val < b.val;
+    };
+    priority_queue<yyds, vector<yyds>, decltype(cmp)> q(cmp);
+
+    q.emplace(233);
+    q.emplace(2333);
+
+    cout << q.top().val << endl; // 2333
+}
+```
+
+---
+
 ## 映射表（Map）
 
 map：映射表，键值（key），实值（value），可以**根据键值进行自动排序**，**键值唯一**

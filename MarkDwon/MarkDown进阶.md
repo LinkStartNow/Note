@@ -270,5 +270,3 @@ a&=b*c*d \\
 &=d
 \end{aligned}
 $$
-
-

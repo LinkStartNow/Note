@@ -137,6 +137,140 @@ public:
 
 ---
 
+# 删除一次得到子数组最大和
+
+> Problem: [1186. 删除一次得到子数组最大和](https://leetcode.cn/problems/maximum-subarray-sum-with-one-deletion/description/)
+
+## 思路——动态规划
+
+> 原以为这题跟之前求子数组最大和是一样的，but这里可以多一次删除操作，so之前贪心的策略并不好取，因为删当前区间还是删未来区间哪个最优是无法确定的
+>
+> 既然又是最值问题，不如考虑一下动态规划：
+>
+> 我们考虑以每个数字为右边界可以得到的最大值，同时还需要保留删除情况，所以定义$dp[i][kill]$表示以第i个元素为右边界并且一定要删除kill个数字（$kill = 0, 1$）
+>
+> 那么考虑如何状态转移，假如$kill = 0$：
+>
+> 那么我们考虑选不选择i左边的元素，不选则直接是$arr[i]$，否则为$dp[i - 1][0] + arr[i]$
+>
+> 假如$kill = 1$：
+>
+> 那么不可能不选择i左边的元素，因为一定要删除一个元素，但是只剩下唯一一个元素无法删除，但是还是要考虑删除前面部分还是第i个元素，删除前面部分则为$dp[i - 1][1] + arr[i]$，否则为$dp[i - 1][0]$
+>
+> 于是最终的状态转移方程变成了：
+> $$
+> dp[i][kill] =
+> \begin{cases}
+> max(dp[i - 1][0], 0) + arr[i] & kill = 0 \and i > 0 \\
+> max(dp[i - 1][1] + arr[i], dp[i - 1][0]) & kill = 1 \and i > 0 \\
+> -\infty & i <= 0
+> \end{cases}
+> $$
+
+## Code
+
+```c++
+class Solution {
+    vector<vector<int>> dp;
+    int find(vector<int>& arr, int right, bool kill)
+    {
+        if (right < 0) return -1e9 / 2;
+        int& res = dp[right][kill];
+        if (res != -1e9) return res;
+        if (!kill) {
+            return res = max(find(arr, right - 1, kill), 0) + arr[right];
+        }
+        else return res = max(find(arr, right - 1, 0), find(arr, right - 1, kill) + arr[right]);
+    }
+
+public:
+    int maximumSum(vector<int>& arr) {
+        int ans = -1e9, n = arr.size();
+        dp.resize(n, vector<int>(2, -1e9));
+        for (int i = 0; i < n; ++i) ans = max({ans, find(arr, i, 0), find(arr, i, 1)});
+        return ans;
+    }
+};
+```
+
+---
+
+## 递归转递推
+
+> 将dp递推数组照抄完事
+
+### Code
+
+```c++
+class Solution {
+    vector<vector<int>> dp;
+public:
+    int maximumSum(vector<int>& arr) {
+        int ans = -1e9, n = arr.size();
+        dp.resize(n + 1, vector<int>(2, -1e9 / 2));
+        for (int i = 0; i < n; ++i) {
+            dp[i + 1][0] = max(dp[i][0], 0) + arr[i];
+            dp[i + 1][1] = max(dp[i][0], dp[i][1] + arr[i]);
+            ans = max({ans, dp[i + 1][0], dp[i + 1][1]});
+        }
+        return ans;
+    }
+};
+```
+
+---
+
+### 空间优化——翻转数组
+
+> 总共只用到两层的数组，于是直接翻转数组进行空间优化
+
+#### Code
+
+```c++
+class Solution {
+    vector<vector<int>> dp;
+public:
+    int maximumSum(vector<int>& arr) {
+        int ans = -1e9, n = arr.size();
+        dp.resize(2, vector<int>(2, -1e9 / 2));
+        for (int i = 0; i < n; ++i) {
+            int k = i % 2, z = k ^ 1;
+            dp[z][0] = max(dp[k][0], 0) + arr[i];
+            dp[z][1] = max(dp[k][0], dp[k][1] + arr[i]);
+            ans = max({ans, dp[z][0], dp[z][1]});
+        }
+        return ans;
+    }
+};
+```
+
+---
+
+### 空间优化——一维
+
+> 由于只依赖于上一层，而且当前层的1依赖于上一层的1和0，而当前层的0只依赖于上一层的0，所以直接先改1后改0即可
+
+#### Code
+
+```c++
+class Solution {
+    vector<int> dp;
+public:
+    int maximumSum(vector<int>& arr) {
+        int ans = -1e9, n = arr.size();
+        dp.resize(2, -1e9 / 2);
+        for (int i = 0; i < n; ++i) {
+            dp[1] = max(dp[0], dp[1] + arr[i]);
+            dp[0] = max(dp[0], 0) + arr[i];
+            ans = max({ans, dp[0], dp[1]});
+        }
+        return ans;
+    }
+};
+```
+
+---
+
 # 例题——卖木头块
 
 > Problem: [2312. 卖木头块](https://leetcode.cn/problems/selling-pieces-of-wood/description/)
@@ -2511,6 +2645,113 @@ public:
         ll ans = 0;
         for (int i = 0; i < n; ++i) ans += dp[1 << i][i];
         return ans % mod;
+    }
+};
+```
+
+---
+
+## 到达第 K 级台阶的方案数
+
+> Problem: [3154. 到达第 K 级台阶的方案数](https://leetcode.cn/problems/find-number-of-ways-to-reach-the-k-th-stair/description/)
+
+### 思路
+
+> 这题思路主要还是从dp出发去考虑。
+>
+> 我们在选取未来方案前是根据当前状态选择的，限制未来选择的状态有当前的位置，上一步是否回跳，以及当前jump了多少次，所以这些将作为状态的设定来考虑方案数
+>
+> 因为每次改变完状态后判断方法和原问题相似的子问题，所以可以通过递归来解决
+>
+> 这里由于到达终点后依旧可以回跳等操作继续增加方案数，所以到达目标并不是递归终点，只能让返回的记录数+1，真正的递归终点限制应该是在回跳上，因为不能连续回跳所以如果$now > k + 1$那么无论怎么操作都只会越变越大，所以无需继续递归了。而对于下限没有要求（虽然再低也不会太低）
+
+### Code
+
+```c++
+class Solution {
+
+    int dfs(int target, bool down, int jump)
+    {
+        if (target > 1) return 0;
+        int res = 0;
+        if (!target) res = 1;
+        if (!down) res += dfs(target - 1, true, jump);
+        res += dfs(target + (1 << jump), false, jump + 1);
+        return res;
+    }
+public:
+    int waysToReachStair(int k) {
+        return dfs(1 - k, false, 0);
+    }
+};
+```
+
+---
+
+### 优化——记忆化搜索（状态压缩）
+
+> dp的递归一般都得搭配记忆化搜索来食用，这题也不例外，状态会被重复计算，所以可以采取记忆化搜索的方式保留之前搜索的结果来避免不必要的重复
+>
+> 但是这题有个问题，k是个巨大的值，也就是说我们在到达k之前的位置也会经历巨大的值，那下标将会巨大，咋记录呢？
+>
+> 首先想到的可以是用map来做映射，但是map咋能记录三个状态做key值呢，这里就得手动做映射了
+>
+> 因为当前位置是int，步数是int（不大于32），上一跳状态（1位），所以我们可以用64位（long long）来记录三个值的映射值
+> $$
+> key = now << 32 | jump << 1 | last
+> $$
+> 这样也能保证key值对应状态的唯一
+
+#### Code
+
+```c++
+class Solution {
+    using ll = long long;
+    unordered_map<ll, int> dp;
+    int dfs(int target, bool down, int jump)
+    {
+        if (target > 1) return 0;
+        ll ssr = (ll)target << 32 | jump << 1 | down;
+        if (dp.count(ssr)) return dp[ssr];
+        int& res = dp[ssr];
+        if (!target) res = 1;
+        if (!down) res += dfs(target - 1, true, jump);
+        res += dfs(target + (1 << jump), false, jump + 1);
+        return res;
+    }
+public:
+    int waysToReachStair(int k) {
+        return dfs(1 - k, false, 0);
+    }
+};
+```
+
+---
+
+### 再优化——全局共享记忆化
+
+> 如果记录的是now以及上一条和当前跳那么重复度其实不会太高，我们可以设置成相对距离的跳跃，也就是与目标点相距target，另外两个状态不变，这样所有的样例其实都可以用同一份记忆化数组，平均下来能大大降低开销
+
+#### Code
+
+```c++
+using ll = long long;
+unordered_map<ll, int> dp;
+class Solution {
+    int dfs(int target, bool down, int jump)
+    {
+        if (target > 1) return 0;
+        ll ssr = (ll)target << 32 | jump << 1 | down;
+        if (dp.count(ssr)) return dp[ssr];
+        int& res = dp[ssr];
+        if (!target) res = 1;
+        if (!down) res += dfs(target - 1, true, jump);
+        res += dfs(target + (1 << jump), false, jump + 1);
+        return res;
+    }
+public:
+    int waysToReachStair(int k) {
+        return dfs(1 - k, false, 0);
     }
 };
 ```

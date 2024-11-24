@@ -2046,10 +2046,2282 @@ public:
 
 ---
 
-# 回溯
+# 字符串
 
-## LCR 085. 括号生成
+## LCR 157. 套餐内商品的排列顺序
 
-> Problem: [LCR 085. 括号生成](https://leetcode.cn/problems/IDBivT/description/)
+> Problem: [LCR 157. 套餐内商品的排列顺序](https://leetcode.cn/problems/zi-fu-chuan-de-pai-lie-lcof/description/)
 
-### 思路——剪枝+回溯
+### 思路——回溯
+
+> 这题几乎就是比较裸的回溯枚举了，全排列嘛，记得先排个序，然后通过层剪枝的方式来去重即可
+
+### Code
+
+```c++
+class Solution {
+    vector<string> ans;
+    string tmp;
+    int n;
+    vector<bool> vis;
+
+    void dfs(const string& goods)
+    {
+        if (tmp.size() == n) {
+            ans.emplace_back(tmp);
+            return;
+        }
+
+        for (int i = 0; i < n; ++i) {
+            if (vis[i] || i && !vis[i - 1] && goods[i] == goods[i - 1]) continue;
+            tmp.push_back(goods[i]);
+            vis[i] = true;
+            dfs(goods);
+            vis[i] = false;
+            tmp.pop_back();
+        }
+    }
+public:
+    vector<string> goodsOrder(string goods) {
+        n = goods.size();
+        vis.resize(n, false);
+        sort(goods.begin(), goods.end());
+        dfs(goods);
+        return ans;
+    }
+};
+```
+
+---
+
+## LCR 167. 招式拆解 I
+
+> Problem: [LCR 167. 招式拆解 I](https://leetcode.cn/problems/zui-chang-bu-han-zhong-fu-zi-fu-de-zi-zi-fu-chuan-lcof/description/)
+
+### 思路1——滑动窗口+hash
+
+> 我们维护一个区间内字符全是唯一的滑动窗口，求出所有滑动窗口的最大值即可
+>
+> 如何判断一个新区间是否符合要求呢，我们可以用一个右指针表示当前区间的右边界，假如右边界的数字在当前区间内出现过，则不断缩小左区间直到去掉与当前右边界相同的字符
+>
+> 这里我们通过hash来动态记录当前区间内字符是否出现过
+
+### Code
+
+```c++
+class Solution {
+public:
+    int dismantlingAction(string arr) {
+        unordered_map<char, int> mp;
+        int i = 0;
+        int ans = 0, cnt = 0;
+        int n = arr.size();
+        for (int j = 0; j < n; ++j) {
+            if (!mp[arr[j]]) ans = max(ans, ++cnt);
+            else {
+                while (i < j && arr[i] != arr[j]) --mp[arr[i++]], --cnt;
+                if (i < j) ++i;
+            }
+            mp[arr[j]] = 1;
+        }
+        return ans;
+    }
+};
+```
+
+---
+
+### 优化——记录下标
+
+> 我们在缩短左区间的过程中其实一步一步走判断挺浪费时间的，其实这个hash数组可以直接用来记录字符x最晚出现的位置，这样我们就可以迅速完成跳转啦
+
+#### Code
+
+```c++
+class Solution {
+public:
+    int dismantlingAction(string arr) {
+        unordered_map<char, int> mp;
+        int ans = 0;
+        int p = 0;
+        for (int i = 0; i < arr.size(); ++i) {
+            if (mp.count(arr[i])) p = max(p, mp[arr[i]] + 1);
+            mp[arr[i]] = i;
+            ans = max(i - p + 1, ans);
+        }
+        return ans;
+    }
+};
+```
+
+---
+
+# 链表
+
+## LCR 123. 图书整理 I
+
+> Problem: [LCR 123. 图书整理 I](https://leetcode.cn/problems/cong-wei-dao-tou-da-yin-lian-biao-lcof/description/)
+
+### 思路
+
+> 直接递归，先递后归，在归的时候输出结果即可
+
+### Code
+
+```c++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+    vector<int> ans;
+    void dfs(ListNode* head)
+    {
+        if (!head) return;
+        dfs(head->next);
+        ans.emplace_back(head->val);
+    }
+public:
+    vector<int> reverseBookList(ListNode* head) {
+        dfs(head);
+        return ans;
+    }
+};
+```
+
+---
+
+## LCR 136. 删除链表的节点
+
+> Problem: [LCR 136. 删除链表的节点](https://leetcode.cn/problems/shan-chu-lian-biao-de-jie-dian-lcof/description/)
+
+### 思路
+
+> 因为最终要返回头结点，所以要分类讨论一下，如果删的是头结点，那么要换头了，否则最后返回头结点即可
+>
+> 因为所有值都不同，于是只会删除一个节点，所以删头的话直接返回`head->next`即可。如果不是删头的话就一路遍历链表删除。
+>
+> 而链表的删除实际要要依赖于上一个节点改变指向才能实现，而当前是单链表所以至少要额外开一个指针来记录上一个节点
+
+### Code
+
+```c++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode(int x) : val(x), next(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* deleteNode(ListNode* head, int val) {
+        if (!head) return head;
+        if (head->val == val) return head->next;
+        ListNode* res = head;
+        ListNode* last = nullptr;
+        while (head) {
+            if (head->val == val) {
+                last->next = head->next;
+                break;
+            }
+            else {
+                last = head;
+                head = head->next;
+            }
+        }
+        return res;
+    }
+};
+```
+
+---
+
+## LCR 154. 复杂链表的复制
+
+> Problem: [LCR 154. 复杂链表的复制](https://leetcode.cn/problems/fu-za-lian-biao-de-fu-zhi-lcof/description/)
+
+### 大题思路
+
+> 这题复制原先的普通链表并不难，难就难在还有一个随机指向的random指针，我们很难快速复制到随机指针指向的节点
+>
+> 于是核心任务是处理这个
+
+### 思路1——hash映射
+
+> 寻找困难那就拿空间来换取时间，强行记录下每个节点对应的映射，这样寻找随机节点也直接用映射的方式就行了，思路上非常简单粗暴
+
+#### 复杂度
+
+- 时间
+
+	时间上第一轮做映射，第二轮连接表即可，$O(n)$
+
+- 空间
+
+	空间上需要存储额外的映射关系，所以需要$O(n)$
+
+#### Code
+
+```c++
+/*
+// Definition for a Node.
+class Node {
+public:
+    int val;
+    Node* next;
+    Node* random;
+    
+    Node(int _val) {
+        val = _val;
+        next = NULL;
+        random = NULL;
+    }
+};
+*/
+class Solution {
+public:
+    Node* copyRandomList(Node* head) {
+        unordered_map<Node*, Node*> mp;
+        Node* ssr = head;
+        while (ssr) {
+            mp[ssr] = new Node(ssr->val);
+            ssr = ssr->next;
+        }
+        ssr = head;
+        while (ssr) {
+            mp[ssr]->random = mp[ssr->random];
+            mp[ssr]->next = mp[ssr->next];
+            ssr = ssr->next;
+        }
+        return mp[head];
+    }
+};
+```
+
+---
+
+### 思路2——拼接+拆分
+
+> 这是这题比较巧的一种解法，我们可以对每个节点都克隆一份连接在原本的链表上，最后再拆出这么一条复制链就行。这么做的好处是我们可以很容易找出随机节点的复制节点，因为当前节点的随机节点很好找，而且每个节点的复制节点都是自身的下一个节点，于是所有复制节点也就一目了然了
+>
+> 这种方法就是要处理挺多细节的，比如空节点，空指针什么的
+>
+> 流程就是先复制延长所有节点，然后再调整random指向，最后拆分。这里的拆分千万别提前拆分，容易炸因为后面的random可能会指向前面的节点，提前拆开了就乱了
+
+#### 复杂度
+
+- 时间
+
+	三轮遍历，为$O(n)$
+
+- 空间
+
+	没有额外空间消耗，为$O(1)$
+
+#### Code
+
+```c++
+/*
+// Definition for a Node.
+class Node {
+public:
+    int val;
+    Node* next;
+    Node* random;
+    
+    Node(int _val) {
+        val = _val;
+        next = NULL;
+        random = NULL;
+    }
+};
+*/
+class Solution {
+public:
+    Node* copyRandomList(Node* head) {
+        if (!head) return head;
+        Node* ssr = head;
+
+        // 拼接
+        while (ssr) {
+            Node* t = new Node(ssr->val);
+            t->next = ssr->next;
+            ssr->next = t;
+            ssr = t->next;
+        }
+
+        // random重新指向
+        ssr = head;
+        while (ssr) {
+            if (ssr->random) {
+                ssr->next->random = ssr->random->next;
+            }
+            else ssr->next->random = nullptr;
+            ssr = ssr->next->next;
+        }
+
+        // 先提取出返回答案
+        Node* res = head->next;
+
+        // 拆分
+        ssr = head;
+        Node* p = head->next;
+        while (ssr) {
+            ssr->next = p->next;
+            if (p->next) {
+                p->next = p->next->next;
+            }
+            else return res;
+            ssr = ssr->next;
+            p = p->next;
+        }
+
+        return res;
+    }
+};
+```
+
+---
+
+# 栈与队列
+
+## LCR 125. 图书整理 II
+
+> Problem: [LCR 125. 图书整理 II](https://leetcode.cn/problems/yong-liang-ge-zhan-shi-xian-dui-lie-lcof/description/)
+
+### 思路
+
+> 题意很简单，用两个栈模拟队列。
+>
+> 我们都知道栈后进先出，所以将栈中的元素再次入栈，然后再出来就是原先的顺序了，所以我们使用两个栈，一个栈用于输出，一个栈用于读入就行。
+
+### 复杂度
+
+- 时间
+
+	时间上，每次进行一次操作都需要将所有元素倒往一个栈然后进行输入输出操作，平均每次需要$O(n)$的时间复杂度，总共需要$O(n^2)$
+
+- 空间
+
+	两个栈，总共大小为n，于是是$O(n)$
+
+### Code
+
+```c++
+class MyQueue {
+    stack<int> in, out;
+public:
+    MyQueue() {
+
+    }
+    
+    void push(int x) {
+        while (out.size()) in.push(out.top()), out.pop();
+        in.push(x);
+    }
+    
+    int pop() {
+        while (in.size()) out.push(in.top()), in.pop();
+        int t = out.top(); out.pop();
+        return t;
+    }
+    
+    int peek() {
+        while (in.size()) out.push(in.top()), in.pop();
+        return out.top();
+    }
+    
+    bool empty() {
+        return in.empty() && out.empty();
+    }
+};
+
+/**
+ * Your MyQueue object will be instantiated and called as such:
+ * MyQueue* obj = new MyQueue();
+ * obj->push(x);
+ * int param_2 = obj->pop();
+ * int param_3 = obj->peek();
+ * bool param_4 = obj->empty();
+ */
+```
+
+---
+
+### 优化
+
+> 实际上上面的颠来倒去的操作完全不需要，我们的两个栈完全可以独立的做输入输出操作，当我们发生了读队首操作时，直接将当前所有输入的数据倒往输出栈中即可倒出队首。随后的输出操作直接从当前的输出栈弹即可。即使后续有新的值加入那么也不可能先输出，所以输出队列不需要往回倒。
+>
+> 唯有输出栈空的时候才需要从输入队列获取数据
+
+#### 复杂度
+
+- 时间
+
+	时间上每个元素只有一次的进入输入栈操作，以及一次的进入输出栈操作，还有一次弹出操作，所以总的时间复杂度为$O(n)$
+
+- 空间
+
+	空间不变，$O(n)$
+
+#### Code
+
+```c++
+class CQueue {
+    stack<int> in, out;
+public:
+    CQueue() {
+
+    }
+    
+    void appendTail(int value) {
+        in.push(value);
+    }
+    
+    int deleteHead() {
+        if (out.empty())  if (in.size()) while (in.size()) out.push(in.top()), in.pop();
+        else return -1;
+        int t = out.top(); out.pop();
+        return t;
+    }
+};
+
+/**
+ * Your CQueue object will be instantiated and called as such:
+ * CQueue* obj = new CQueue();
+ * obj->appendTail(value);
+ * int param_2 = obj->deleteHead();
+ */
+```
+
+---
+
+## LCR 147. 最小栈
+
+> Problem: [LCR 147. 最小栈](https://leetcode.cn/problems/bao-han-minhan-shu-de-zhan-lcof/description/)
+
+### 思路
+
+> 这里其实可以按照单调栈的思想多维护一个单调栈来保存当前最小的节点
+>
+> 由于新节点是最先被弹出的，所以我们不能通过新节点来弹出之前的节点，于是这个单调栈只需要对当前栈顶进行判定即可，如果小那么用自身，否则添加一次栈顶元素（方便访问最小值）
+
+### Code
+
+```c++
+class MinStack {
+    stack<int> s, ssr;
+public:
+    /** initialize your data structure here. */
+    MinStack() {
+
+    }
+    
+    void push(int x) {
+        s.emplace(x);
+        if (ssr.size()) {
+            if (ssr.top() < x) ssr.emplace(ssr.top());
+            else ssr.emplace(x);
+        }
+        else ssr.emplace(x);
+    }
+    
+    void pop() {
+        s.pop();
+        ssr.pop();
+    }
+    
+    int top() {
+        return s.top();
+    }
+    
+    int getMin() {
+        return ssr.top();
+    }
+};
+
+/**
+ * Your MinStack object will be instantiated and called as such:
+ * MinStack* obj = new MinStack();
+ * obj->push(x);
+ * obj->pop();
+ * int param_3 = obj->top();
+ * int param_4 = obj->getMin();
+ */
+```
+
+---
+
+## LCR 148. 验证图书取出顺序
+
+> Problem: [LCR 148. 验证图书取出顺序](https://leetcode.cn/problems/zhan-de-ya-ru-dan-chu-xu-lie-lcof/description/)
+
+### 思路
+
+> 这题就是判断出栈顺序，我们最好的方式肯定是直接用栈来模拟啦，先按照顺序进栈，能弹出多少先弹出
+>
+> 然后再判断剩余的弹出序列是否能满足即可
+
+### Code
+
+```c++
+class Solution {
+public:
+    bool validateBookSequences(vector<int>& putIn, vector<int>& takeOut) {
+        stack<int> s;
+        int k = 0, n = putIn.size();
+        for (int x: putIn) {
+            s.emplace(x);
+            while (s.size() && k < n && s.top() == takeOut[k]) s.pop(), ++k;
+        }
+        for (; k < n; ++k) {
+            if (s.top() == takeOut[k]) s.pop();
+            else return false;
+        }
+        return true;
+    }
+};
+```
+
+---
+
+## LCR 184. 设计自助结算系统
+
+> Problem: [LCR 184. 设计自助结算系统](https://leetcode.cn/problems/dui-lie-de-zui-da-zhi-lcof/description/)
+
+### 思路
+
+> 这题就是个维护最大值的队列的问题，同样我们可以使用一个队列模拟队列入队出队的情况
+>
+> 同时再用一个单调栈维护当前的最值，因为此时最先出去的是最早进来的，所以我们后进的元素站场时间会更长，所以可以弹出前面更小的元素
+
+### Code
+
+```c++
+class Checkout {
+    queue<int> q;
+    deque<int> ssr;
+public:
+    Checkout() {
+
+    }
+    
+    int get_max() {
+        if (ssr.empty()) return -1;
+        return ssr.front();
+    }
+    
+    void add(int value) {
+        q.emplace(value);
+        while (ssr.size() && value > ssr.back()) ssr.pop_back();
+        ssr.emplace_back(value);
+    }
+    
+    int remove() {
+        if (q.empty()) return -1;
+        int t = q.front(); q.pop();
+        if (ssr.size() && t == ssr.front()) ssr.pop_front();
+        return t; 
+    }
+};
+
+/**
+ * Your Checkout object will be instantiated and called as such:
+ * Checkout* obj = new Checkout();
+ * int param_1 = obj->get_max();
+ * obj->add(value);
+ * int param_3 = obj->remove();
+ */
+```
+
+---
+
+# 树
+
+## LCR 124. 推理二叉树
+
+> Problem: [LCR 124. 推理二叉树](https://leetcode.cn/problems/zhong-jian-er-cha-shu-lcof/description/)
+
+### 思路
+
+> 我们可以手动模拟一下如何根据前序和中序推一棵树，由前序遍历的特点可知，第一个遍历的肯定是根节点，然后再接着遍历，所以对于当前区间我们可以一下子获取到根节点，而中序遍历的节点可以很好的分出左右两棵子树，所以根据根节点在中序遍历中的位置，就可以分出左子树和右子树，然后同样去处理左右子树，最终整棵树也就出来了
+
+### Code
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+    unordered_map<int, int> mp;
+    TreeNode* fun(vector<int>& pre, vector<int>& in, int li, int ri, int lp, int rp)
+    {
+        if (lp > rp) return nullptr;
+        TreeNode* res = new TreeNode(pre[lp]);
+        int pos = mp[res->val];
+        int len = pos - li;
+        res->left = fun(pre, in, li, pos - 1, lp + 1, lp + len);
+        res->right = fun(pre, in, pos + 1, ri, lp + len + 1, rp);
+        return res;
+    }
+
+public:
+    TreeNode* deduceTree(vector<int>& preorder, vector<int>& inorder) {
+        int n = preorder.size();
+        for (int i = 0; i < n; ++i) mp[inorder[i]] = i;
+        return fun(preorder, inorder, 0, n - 1, 0, n - 1);
+    }
+};
+```
+
+---
+
+### 优化
+
+> 实际上记录这个前序的区间是没必要的，因为对于前序遍历的数组我们能用到的只有左边界用来获取当前子树的根，而我们遍历的时候每次都是优先遍历左子树，所以根都是按顺序获得的，于是只需要一个全局共用的pos来记录当前遍历到前序第几个根就行了
+
+#### Code
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+    unordered_map<int, int> mp;
+    int k = 0;
+    TreeNode* fun(vector<int>& pre, vector<int>& in, int li, int ri)
+    {
+        if (li > ri) return nullptr;
+        TreeNode* res = new TreeNode(pre[k++]);
+        int pos = mp[res->val];
+        int len = pos - li;
+        res->left = fun(pre, in, li, pos - 1);
+        res->right = fun(pre, in, pos + 1, ri);
+        return res;
+    }
+
+public:
+    TreeNode* deduceTree(vector<int>& preorder, vector<int>& inorder) {
+        int n = preorder.size();
+        for (int i = 0; i < n; ++i) mp[inorder[i]] = i;
+        return fun(preorder, inorder, 0, n - 1);
+    }
+};
+```
+
+---
+
+## LCR 143. 子结构判断
+
+> Problem: [LCR 143. 子结构判断](https://leetcode.cn/problems/shu-de-zi-jie-gou-lcof/description/)
+
+### 思路
+
+> 这题思路比较简单，直接暴力dfs遍历每个节点P看看是不是可能为作为子树B的根节点
+>
+> 判断方式为：
+>
+> 假如B空了那么说明B树遍历完了，结构完整返回true
+>
+> 假如P空了，那么说明P遍历到叶子了，而B还能往下肯定不对，直接false
+>
+> 如果P和B的值已经不一样了，那么就直接返回false
+
+### Code
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+    bool dfs(TreeNode* A, TreeNode* B)
+    {
+        if (!B) return true;
+        if (!A) return false;
+        if (A->val != B->val) return false;
+        return dfs(A->left, B->left) && dfs(A->right, B->right);
+    }
+public:
+    bool isSubStructure(TreeNode* A, TreeNode* B) {
+        return (A && B) && ((dfs(A, B)) || isSubStructure(A->left, B) || isSubStructure(A->right, B));
+    }
+};
+```
+
+---
+
+## LCR 144. 翻转二叉树
+
+> Problem: [LCR 144. 翻转二叉树](https://leetcode.cn/problems/er-cha-shu-de-jing-xiang-lcof/description/)
+
+### 思路
+
+> 先递归处理左右子树，然后将左右子树交换即可
+>
+> - 空
+>
+> 	直接返回，不用处理了
+>
+> - 非空
+>
+> 	递归的处理各个子树的翻转就行
+
+### Code
+
+```c++
+class Solution {
+public:
+    TreeNode* mirrorTree(TreeNode* root) {
+        if (!root) return nullptr;
+        TreeNode* l = mirrorTree(root->left);
+        TreeNode* r = mirrorTree(root->right);
+        root->left = r;
+        root->right = l;
+        return root;
+    }
+};
+```
+
+---
+
+## LCR 145. 判断对称二叉树
+
+> Problem: [LCR 145. 判断对称二叉树](https://leetcode.cn/problems/dui-cheng-de-er-cha-shu-lcof/description/)
+
+### 思路
+
+> 这题的关键在于判断左右子树是否对称，那么原题给的一个参数的函数肯定都不够递归的，于是需要用到辅助判断函数
+>
+> - 空
+>
+> 	两节点全空则为true，否则为false
+>
+> - 非空
+>
+> 	非空先比较当前节点的value，如果已经不同则直接false，否则往下递归比较，这里不能顺着直接左子树比左子树，因为要比较对称，所以要交叉的比较
+
+### Code
+
+```c++
+class Solution {
+    bool check(TreeNode* l, TreeNode* r)
+    {
+        if (!l && !r) return true;
+        return l && r && (l->val == r->val) && check(l->left, r->right) && check(l->right, r->left);
+    }
+public:
+    bool checkSymmetricTree(TreeNode* root) {
+        return !root || check(root->left, root->right);
+    }
+};
+```
+
+---
+
+## 彩灯装饰记录
+
+### LCR 149. 彩灯装饰记录 I
+
+> Problem: [LCR 149. 彩灯装饰记录 I](https://leetcode.cn/problems/cong-shang-dao-xia-da-yin-er-cha-shu-lcof/description/)
+
+#### 思路
+
+> 这题就是个二叉树的层序遍历，手搓一个bfs即可
+
+#### Code
+
+```c++
+class Solution {
+public:
+    vector<int> decorateRecord(TreeNode* root) {
+        if (!root) return {};
+        vector<int> ans;
+        queue<TreeNode*> q;
+        q.emplace(root);
+        while (q.size()) {
+            auto t = q.front(); q.pop();
+            ans.emplace_back(t->val);
+            if (t->left) q.emplace(t->left);
+            if (t->right) q.emplace(t->right);
+        }
+        return ans;
+    }
+};
+```
+
+---
+
+### LCR 150. 彩灯装饰记录 II
+
+> Problem: [LCR 150. 彩灯装饰记录 II](https://leetcode.cn/problems/cong-shang-dao-xia-da-yin-er-cha-shu-ii-lcof/description/)
+
+#### 思路
+
+> 依旧是二叉树的层序遍历，老样子套bfs，但是这里要注意换行，可以采用特殊换行标记法来处理，在每一行末尾放入一个nullptr指针来作为换行标记
+>
+> 最终当只剩下一个nullptr时退出即可
+
+#### Code
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> decorateRecord(TreeNode* root) {
+        if (!root) return {};
+        vector<vector<int>> ans;
+        vector<int> now;
+        queue<TreeNode*> q;
+        q.emplace(root);
+        q.emplace(nullptr);
+        while (q.size()) {
+            auto t = q.front(); q.pop();
+            if (!t) {
+                ans.emplace_back(now);
+                if (q.empty()) return ans;
+                q.emplace(nullptr);
+                now.clear();
+                continue;
+            }
+            now.emplace_back(t->val);
+            if (t->left) q.emplace(t->left);
+            if (t->right) q.emplace(t->right);
+        }
+        return ans;
+    }
+};
+```
+
+---
+
+### LCR 151. 彩灯装饰记录 III
+
+> Problem: [LCR 151. 彩灯装饰记录 III](https://leetcode.cn/problems/cong-shang-dao-xia-da-yin-er-cha-shu-iii-lcof/description/)
+
+#### 思路
+
+> 只需要在上一题的基础上假如计数器，隔行进行翻转再放入答案即可
+
+#### Code
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> decorateRecord(TreeNode* root) {
+        if (!root) return {};
+        vector<vector<int>> ans;
+        vector<int> now;
+        queue<TreeNode*> q;
+        q.emplace(root);
+        q.emplace(nullptr);
+        int cnt = 1;
+        while (q.size()) {
+            auto t = q.front(); q.pop();
+            if (!t) {
+                ++cnt;
+                if (cnt % 2) reverse(now.begin(), now.end());
+                ans.emplace_back(now);
+                if (q.empty()) return ans;
+                q.emplace(nullptr);
+                now.clear();
+                continue;
+            }
+            now.emplace_back(t->val);
+            if (t->left) q.emplace(t->left);
+            if (t->right) q.emplace(t->right);
+        }
+        return ans;
+    }
+};
+```
+
+---
+
+## LCR 152. 验证二叉搜索树的后序遍历序列
+
+> Problem: [LCR 152. 验证二叉搜索树的后序遍历序列](https://leetcode.cn/problems/er-cha-sou-suo-shu-de-hou-xu-bian-li-xu-lie-lcof/description/)
+
+### 思路
+
+> 二叉搜索树的左子树全小于根，右子树全大于根
+>
+> 给了后续遍历我们对于当前区间可以直接找出根节点，然后暴力遍历前面的节点找出第一个大于根的节点，就分出左右区间了，然后判断右区间的节点是否全大于根，不是则直接返回false
+>
+> 然后接着对左右区间进行递归分治
+
+### Code
+
+```c++
+class Solution {
+
+    bool Check(vector<int>& postorder, int l, int r)
+    {
+        if (l >= r) return true;
+        int m;
+        for (m = 0; m < r; ++m) if (postorder[m] > postorder[r]) break;
+        for (int i = m; i < r; ++i) if (postorder[i] < postorder[r]) return false;
+        return Check(postorder, l, m - 1) && Check(postorder, m, r - 1);
+    }
+
+public:
+    bool verifyTreeOrder(vector<int>& postorder) {
+        return Check(postorder, 0, postorder.size() - 1);
+    }
+};
+```
+
+---
+
+## LCR 153. 二叉树中和为目标值的路径
+
+> Problem: [LCR 153. 二叉树中和为目标值的路径](https://leetcode.cn/problems/er-cha-shu-zhong-he-wei-mou-yi-zhi-de-lu-jing-lcof/description/)
+
+### 思路
+
+> 这题就递归加回溯就完了，暴力dfs遍历整棵树，到叶子节点判断当前总和是否为target，是则加入当前答案
+
+### Code
+
+```c++
+class Solution {
+    vector<vector<int>> ans;
+    vector<int> tmp;
+    void dfs(TreeNode* f, int target)
+    {
+        if (!f) return;
+        tmp.emplace_back(f->val);
+        target -= f->val;
+        if (!target && !f->left && !f->right) ans.emplace_back(tmp);
+        dfs(f->left, target);
+        dfs(f->right, target);
+        tmp.pop_back();
+    }
+public:
+    vector<vector<int>> pathTarget(TreeNode* root, int target) {
+        dfs(root, target);
+        return ans;
+    }
+};
+```
+
+---
+
+## LCR 155. 将二叉搜索树转化为排序的双向链表
+
+> Problem: [LCR 155. 将二叉搜索树转化为排序的双向链表](https://leetcode.cn/problems/er-cha-sou-suo-shu-yu-shuang-xiang-lian-biao-lcof/description/)
+
+### 思路
+
+> 中序遍历二叉搜索树，并借助头尾节点辅助实现链表建立
+
+### Code
+
+```c++
+class Solution {
+    Node* ans;
+    Node* tail;
+
+    void dfs(Node* f)
+    {
+        if (f->left) dfs(f->left);
+
+        if (ans) {
+            tail->right = f;
+            f->left = tail;
+            tail = f;
+        }
+        else ans = tail = f;
+        cout << f->val << endl;
+
+        if (f->right) dfs(f->right);
+    }
+public:
+    Node* treeToDoublyList(Node* root) {
+        if (!root) return nullptr;
+        ans = tail = nullptr;
+        dfs(root);
+        tail->right = ans;
+        ans->left = tail;
+        return ans;
+    }
+};
+```
+
+---
+
+## LCR 174. 寻找二叉搜索树中的目标节点
+
+> Problem: [LCR 174. 寻找二叉搜索树中的目标节点](https://leetcode.cn/problems/er-cha-sou-suo-shu-de-di-kda-jie-dian-lcof/description/)
+
+### 思路
+
+> 因为是二叉搜索树，所以中序遍历本身就是从小到大有序的，但是这里要求最大的第K个节点，所以最后从大到小跑，这只需要将中序遍历的左右遍历顺序换一下就行了
+
+### Code
+
+```c++
+class Solution {
+    int count = 0;
+public:
+    int findTargetNode(TreeNode* root, int cnt) {
+        if (!root) return -1;
+        int res = -1;
+        if (count < cnt) res = findTargetNode(root->right, cnt);
+        if (res != -1) return res;
+        if (++count == cnt) return root->val;
+        if (count < cnt) res = findTargetNode(root->left, cnt);
+        return res;
+    }
+};
+```
+
+---
+
+## LCR 175. 计算二叉树的深度
+
+> Problem: [LCR 175. 计算二叉树的深度](https://leetcode.cn/problems/er-cha-shu-de-shen-du-lcof/description/)
+
+### 思路
+
+> - 空
+>
+> 	空的情况下深度肯定为0
+>
+> - 非空
+>
+> 	非空则递归去找左子树和右子树深度最深的一个，则当前深度为最大值+1
+
+### Code
+
+```c++
+class Solution {
+public:
+    int maxDepth(TreeNode* root) {
+        if (!root) return 0;
+        return max(maxDepth(root->left), maxDepth(root->right)) + 1;
+    }
+};
+```
+
+---
+
+## LCR 176. 判断是否为平衡二叉树
+
+> Problem: [LCR 176. 判断是否为平衡二叉树](https://leetcode.cn/problems/ping-heng-er-cha-shu-lcof/description/)
+
+### 思路
+
+> - 空
+>
+> 	空树一定是平衡的
+>
+> - 非空
+>
+> 	当前子树要平衡，那么左右子树必须平衡，同时左右子树的最大深度差也不能超过1
+>
+> 这里就借助前面求最大深度的函数来求了
+
+### Code
+
+```c++
+class Solution {
+    int maxDepth(TreeNode* root) {
+        if (!root) return 0;
+        return max(maxDepth(root->left), maxDepth(root->right)) + 1;
+    }
+    
+public:
+    bool isBalanced(TreeNode* root) {
+        if (!root) return true;
+        return abs(maxDepth(root->left) - maxDepth(root->right)) <= 1 && isBalanced(root->left) && isBalanced(root->right);
+    }
+};
+```
+
+---
+
+### 优化——自底向上递归
+
+> 如果每次都对每个节点求一次最大深度，那么其实是非常浪费的，我们其实可以在求最大深度的过程中顺便将当前数是否平衡判断出来
+>
+> 因为子树如果不平衡则直接不平衡，也不用继续判断了。假如子树平衡此时我们又有两树的深度，就可以顺便判断两树的深度差了
+
+#### Code
+
+```c++
+class Solution {
+    int maxDepth(TreeNode* root) {
+        if (!root) return 0;
+        int l = maxDepth(root->left);
+        int r = maxDepth(root->right);
+        if (l == -1 || r == -1 || abs(l - r) > 1) return -1;
+        return max(l, r) + 1;
+    }
+    
+public:
+    bool isBalanced(TreeNode* root) {
+        return maxDepth(root) >= 0;
+    }
+};
+```
+
+---
+
+## LCR 193. 二叉搜索树的最近公共祖先
+
+> Problem: [LCR 193. 二叉搜索树的最近公共祖先](https://leetcode.cn/problems/er-cha-sou-suo-shu-de-zui-jin-gong-gong-zu-xian-lcof/description/)
+
+### 思路
+
+> 两个节点有可能一个是另一个的祖先，所以在递归的过程中一旦当前节点等于二者之一那么就直接返回，否则继续寻找
+>
+> 根据二叉搜索树的特性，我们按照大小就可以分出之后要查询的子树，按照路径一步步查下去，直到当前节点值介于p和q之间，那么他俩就不可能在同一颗子树中了，也就是说当前节点是最近公共祖先
+
+### Code
+
+```c++
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if (p->val > q->val) return lowestCommonAncestor(root, q, p);
+        if (root == p || root == q) return root;
+        if (root->val >= p->val && root->val <= q->val) return root;
+        if (root->val > p->val) return lowestCommonAncestor(root->left, p, q);
+        return lowestCommonAncestor(root->right, p, q);
+    }
+};
+```
+
+---
+
+## LCR 194. 二叉树的最近公共祖先
+
+> Problem: [LCR 194. 二叉树的最近公共祖先](https://leetcode.cn/problems/er-cha-shu-de-zui-jin-gong-gong-zu-xian-lcof/description/)
+
+### 思路
+
+> 主要思路是通过后序遍历递归的先去判断左右子树中有没有p或q节点，假如左右子树都有，那么当前节点一定是最近公共祖先，因为继续往下分就要分子树了。如果只有一边有或者两边都没有那么就是不行
+
+### Code
+
+```c++
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if (!root) return nullptr;
+        if (root == p || root == q) return root;
+        TreeNode* l = lowestCommonAncestor(root->left, p, q);
+        TreeNode* r = lowestCommonAncestor(root->right, p, q);
+        if (l && r) return root;
+        return l ? l : r;
+    }
+};
+```
+
+---
+
+# 位运算
+
+常见的位运算技巧有：
+
+- lowbit
+
+	直接取当前最低位的值，$lowbit(6) = lowbit(110_2) = 2$
+
+	```c++
+	int lowbit(int x) {x & -x;}
+	```
+
+- 减去最低位
+
+	$x \&= x - 1$能让x每次减去当前最低位的1
+
+---
+
+## LCR 133. 位 1 的个数
+
+> Problem: [LCR 133. 位 1 的个数](https://leetcode.cn/problems/er-jin-zhi-zhong-1de-ge-shu-lcof/description/)
+
+### 思路1——暴力循环计数
+
+> 直接将输入的值暴力判断每一位是不是1，然后做计数就行
+
+#### 复杂度
+
+- 时间
+
+	时间上最多判断32位，所以为$O(32)=O(1)$
+
+- 空间
+
+	空间上常量计数即可，$O(1)$
+
+#### Code
+
+```c++
+class Solution {
+public:
+    int hammingWeight(uint32_t n) {
+        int cnt = 0;
+        while (n) {
+            if (n & 1) ++cnt;
+            n >>= 1;
+        }
+        return cnt;
+    }
+};
+```
+
+---
+
+### 思路2——位运算优化
+
+> 我们可以通过前面提供的位运算技巧来实现每次直接对1做跳转，快速求出1的个数
+
+#### 复杂度
+
+- 时间
+
+	时间上只需要跳转1的个数次，$O(k), k <= 32$
+
+- 空间
+
+	空间上常量计数即可，$O(1)$
+
+#### Code
+
+```c++
+class Solution {
+public:
+    int hammingWeight(uint32_t n) {
+        int cnt = 0;
+        while (n) {
+            ++cnt;
+            n &= n - 1;
+        }
+        return cnt;
+    }
+};
+```
+
+---
+
+## LCR 134. Pow(x, n)
+
+> Problem: [LCR 134. Pow(x, n)](https://leetcode.cn/problems/shu-zhi-de-zheng-shu-ci-fang-lcof/description/)
+
+### 思路
+
+> 裸的快速幂板子，刚开始就特判一下是否为负数，然后先按照正数计算，最后负数再取倒数就行
+
+#### Code
+
+```c++
+class Solution {
+public:
+    double myPow(double x, int n) {
+        double ans = 1;
+        bool f = n < 0;
+        n = abs(n);
+        while (n) {
+            if (n & 1) ans *= x;
+            x *= x;
+            n >>= 1;
+        }
+        return f ? 1 / ans : ans;
+    }
+};
+```
+
+---
+
+## LCR 177. 撞色搭配
+
+> Problem: [LCR 177. 撞色搭配](https://leetcode.cn/problems/shu-zu-zhong-shu-zi-chu-xian-de-ci-shu-lcof/description/)
+
+### 思路
+
+> 题意就是在一组数中只有两个数只出现了一次，其他都是两次
+>
+> 我们都知道如果只有一个数出现了单次，那么全部按位异或那么偶数次的都会被消掉，结果就是那个奇数次的值，但是如果两个数都是单次，那么最终求得的将会是那两个数的异或
+>
+> 我们可以通过分组的方式将这两个数分在不同组，那么答案也就出来了，因为最终的值是他们的异或，所以只需要判断任意一个有1的位（这俩数肯定不会同时为1的位），就能实现分组，值相同的数肯定被分在同一个组也能通过异或消除，所以答案也就很明显了
+
+### Code
+
+```c++
+class Solution {
+public:
+    vector<int> sockCollocation(vector<int>& sockets) {
+        int ssr = 0;
+        for (int x: sockets) ssr ^= x;
+        int low = ssr & -ssr;
+        int ans = 0;
+        for (int x:sockets) if (x & low) ans ^= x;
+        return {ans, ssr ^ ans};
+    }
+};
+```
+
+---
+
+## LCR 190. 加密运算
+
+> Problem: [LCR 190. 加密运算](https://leetcode.cn/problems/bu-yong-jia-jian-cheng-chu-zuo-jia-fa-lcof/description/)
+
+### 思路
+
+> 手动模拟小学加法列式子
+>
+> 这里不过就是全变成0101的二进制了
+>
+> 当前位置全1的情况下才会进位，也就对应着按位与运算
+>
+> 进位的位置显然就变成0了，遇到1+0才会加起来等于1,0+0依旧是0，所以也就对应着异或运算
+>
+> 我们可以通过循环位运算的方式模拟这个过程：
+>
+> 先按位与求出进位，按位异或求出当前数增加后的结果，然后让进位数成为下一个加数循环的处理
+
+### Code
+
+```c++
+class Solution {
+public:
+    int encryptionCalculate(int dataA, int dataB) {
+        int ssr = 0;
+        while (dataB) {
+            ssr = (dataA & dataB) << 1;
+            dataA ^= dataB;
+            dataB = ssr;
+        }
+        return dataA;
+    }
+};
+```
+
+---
+
+# 动态规划
+
+## LCR 126. 斐波那契数
+
+> Problem: [LCR 126. 斐波那契数](https://leetcode.cn/problems/fei-bo-na-qi-shu-lie-lcof/description/)
+
+### 思路
+
+> 这题很显然通过前两个状态推当前状态，就是可以通过动态规划来处理，状态转移方程也非常简单：
+> $$
+> dp[i] =
+> \begin{cases}
+> 0 & i = 0 \\
+> 1 & i = 1 \\
+> dp[i - 1] + dp[i - 2] & other
+> \end{cases}
+> $$
+
+### Code
+
+```c++
+class Solution {
+    static const int mod;
+public:
+    int fib(int n) {
+        if (!n) return 0;
+        if (n == 1) return 1;
+        return (fib(n - 1) + fib(n - 2)) % mod;
+    }
+};
+
+const int Solution::mod = 1e9 + 7;
+```
+
+---
+
+### 优化——记忆化搜索
+
+> 这里会产生大量的重复运算，可以通过记忆化搜索来避免
+
+#### Code
+
+```c++
+vector<int> dp(101, -1);
+
+class Solution {
+    static const int mod;
+public:
+    int fib(int n) {
+        if (!n) return 0;
+        if (n == 1) return 1;
+        int& res = dp[n];
+        if (res != -1) return res;
+        return res = (fib(n - 1) + fib(n - 2)) % mod;
+    }
+};
+
+const int Solution::mod = 1e9 + 7;
+```
+
+---
+
+### 递归转递推
+
+> 从2开始每次都由前两个值得到完成递推即可
+
+#### Code
+
+```c++
+class Solution {
+    static const int mod;
+public:
+    int fib(int n) {
+        if (!n) return 0;
+        vector<int> dp(n + 1, 0);
+        dp[1] = 1;
+        for (int i = 2; i <= n; ++i) {
+            dp[i] = (dp[i - 1] + dp[i - 2]) % mod;
+        }
+        return dp[n];
+    }
+};
+
+const int Solution::mod = 1e9 + 7;
+```
+
+---
+
+#### 空间优化——3个变量
+
+> 对于刚刚的递推，我们每次只会用到前两个值做推导，所以可以通过3个变量翻转着写
+
+##### Code
+
+```c++
+class Solution {
+    static const int mod;
+public:
+    int fib(int n) {
+        if (!n) return 0;
+        int a = 0, b = 1, c;
+        for (int i = 2; i <= n; ++i) {
+            c = (a + b) % mod;
+            a = b, b = c;
+        }
+        return b;
+    }
+};
+
+const int Solution::mod = 1e9 + 7;
+```
+
+---
+
+## LCR 127. 跳跃训练
+
+> Problem: [LCR 127. 跳跃训练](https://leetcode.cn/problems/qing-wa-tiao-tai-jie-wen-ti-lcof/description/)
+
+### 思路
+
+> 这题思路也是DP，考虑当前的位置n可能由n-1和n-2通过一步跳来，所以状态转移方程和斐波那契数列的一模一样，也就初始值不一样
+
+### Code
+
+```c++
+const int mod = 1e9 + 7;
+using ll = long long;
+ll dp[101];
+
+class Solution {
+public:
+    ll trainWays(int num) {
+        if (num < 0) return 0;
+        if (!num) return 1;
+        if (dp[num]) return dp[num];
+        ll& res = dp[num] = (ll)trainWays(num - 1) + trainWays(num - 2);
+        return res % mod;
+    }
+};
+```
+
+---
+
+### 递归转递推
+
+```c++
+const int mod = 1e9 + 7;
+using ll = long long;
+ll dp[101];
+
+class Solution {
+public:
+    ll trainWays(int num) {
+        dp[0] = 1;
+        dp[1] = 1;
+        for (int i = 2; i <= num; ++i) dp[i] = (dp[i - 1] + dp[i - 2]) % mod;
+        return dp[num];
+    }
+};
+```
+
+---
+
+#### 空间优化——三变量
+
+```c++
+const int mod = 1e9 + 7;
+using ll = long long;
+ll dp[101];
+
+class Solution {
+public:
+    ll trainWays(int num) {
+        ll a = 1, b = 1, c;
+        for (int i = 2; i <= num; ++i) {
+            c = (a + b) % mod;
+            a = b;
+            b = c;
+        }
+        return b;
+    }
+};
+```
+
+---
+
+## LCR 137. 模糊搜索验证
+
+> Problem: [LCR 137. 模糊搜索验证](https://leetcode.cn/problems/zheng-ze-biao-da-shi-pi-pei-lcof/description/)
+
+### 思路
+
+> 这题可以逆着考虑最后一个匹配的字符如何能匹配上，串s长为n，p长为m
+>
+> 我们定义`dp[i][j]`表示串s前i个字符和p前j个字符是否匹配
+>
+> 则原问题为求`dp[n][m]`，则我们可以根据匹配串来分类讨论：
+>
+> 如果`p[m - 1]`为普通字符，则直接判断是否与`s[n - 1]`相同即可
+>
+> 如果`p[m - 1]`为`.`那么直接就匹配上了
+>
+> 前两种情况匹配上后继续观察前面是否能匹配上，也就是`dp[n - 1][m - 1]`，未匹配上则直接是错误的
+>
+> 如果当前是`*`，那么有两种可能：
+>
+> 1. 不选上一个
+>
+> 	直接忽略上一个字符去考虑`dp[n][m - 2]`
+>
+> 2. 选多次上一个
+>
+> 	一直判断s的最后一个字符是否与前一个字符相同，不同直接break不继续判断，相同则尝试判断前面`dp[n - 1][m - 2]`、`dp[n - 2][m - 2]`……
+>
+> 我们可以确定的边界是：
+>
+> - 两个同时为空串，则true
+> - s为空，p非空则需要判断
+> - s非空，p为空那么肯定也是false
+> - s和p均非空则需要进行判断
+
+### Code
+
+```c++
+class Solution {
+    vector<vector<int>> dp;
+    bool check(const string& s, const string& p, int i, int j)
+    {
+        if (i < 0 || j < 0) return false;
+        if (!i && !j) return true;
+        if (!j) return false;
+        if (dp[i][j] != -1) return dp[i][j];
+        int& res = dp[i][j];
+        if (p[j - 1] == '.') return res = check(s, p, i - 1, j - 1);
+        if (p[j - 1] != '*') {
+            // 当前为普通字符时，如果原串已经为空，或者已经不匹配则一定是false
+            if (!i || s[i - 1] != p[j - 1]) return res = false;
+            // 否则往前尝试判断
+            return res = check(s, p, i - 1, j - 1);
+        }
+        else {
+            // 直接选0次
+            if (check(s, p, i, j - 2)) return res = true;
+            // 尝试选择1-n次，
+            for (int k = i; k; --k) {
+                // 当前数字对上了，继续往前判断
+                if (s[k - 1] == p[j - 2] || p[j - 2] == '.') {
+                    if (check(s, p, k - 1, j - 2)) return res = true;
+                }
+                // 当前字符已经不一样，再往前递归没有意义，直接是false
+                else return res = false;
+            }
+        }
+        return res = false;
+    }
+
+public:
+    bool articleMatch(string s, string p) {
+        int n = s.size(), m = p.size();
+        dp.resize(n + 1, vector<int>(m + 1, -1));
+        return check(s, p, n, m);
+    }
+};
+```
+
+---
+
+## LCR 161. 连续天数的最高销售额
+
+> Problem: [LCR 161. 连续天数的最高销售额](https://leetcode.cn/problems/lian-xu-zi-shu-zu-de-zui-da-he-lcof/description/)
+
+### 思路
+
+> 我们可以定义DP数组，`dp[i]`表示以第i个数字结尾的最大连续和
+>
+> 转移的时候可以考虑只用当前数字，或者当前数字带上前面的一些数字，也就是:
+> $$
+> dp[i] = max(dp[i - 1] + nums[i], nums[i])
+> $$
+
+### Code
+
+```c++
+class Solution {
+public:
+    int maxSales(vector<int>& sales) {
+        int n = sales.size();
+        vector<int> dp(n + 1);
+        int ans = -1e9;
+        for (int i = 1; i <= n; ++i) {
+            dp[i] = max(dp[i], dp[i - 1]);
+            dp[i] += sales[i - 1];
+            ans = max(ans, dp[i]);
+        }
+        return ans;
+    }
+};
+```
+
+---
+
+### 空间优化——2个变量
+
+> 我们可以发现其实每次的转移只依赖于前一个位，所以完全可以用两个变量来代替翻转着做
+
+#### Code
+
+```c++
+class Solution {
+public:
+    int maxSales(vector<int>& sales) {
+        int n = sales.size();
+        int ans = -1e9;
+        int a = 0, b = 0;
+        for (int i = 1; i <= n; ++i) {
+            b = max(b, a);
+            b += sales[i - 1];
+            ans = max(ans, b);
+            a = b, b = 0;
+        }
+        return ans;
+    }
+};
+```
+
+---
+
+### 空间再优化——1个变量
+
+> 其实每次的b只用来保存0做比较，所以我们之间将变量b也省去，用0代替即可
+
+#### Code
+
+```c++
+class Solution {
+public:
+    int maxSales(vector<int>& sales) {
+        int n = sales.size();
+        int ans = -1e9;
+        int a = 0;
+        for (int i = 1; i <= n; ++i) {
+            a = max(0, a);
+            a += sales[i - 1];
+            ans = max(ans, a);
+        }
+        return ans;
+    }
+};
+```
+
+---
+
+> 这里直接用增强的范围for来遍历再精简一下代码
+
+````c++
+class Solution {
+public:
+    int maxSales(vector<int>& sales) {
+        int ans = -1e9;
+        int a = 0;
+        for (int x: sales) {
+            a = max(0, a);
+            a += x;
+            ans = max(ans, a);
+        }
+        return ans;
+    }
+};
+````
+
+---
+
+## LCR 165. 解密数字
+
+> Problem: [LCR 165. 解密数字](https://leetcode.cn/problems/ba-shu-zi-fan-yi-cheng-zi-fu-chuan-lcof/description/)
+
+### 思路
+
+> 我们可以考虑前i个数字能组成多少组合，当前的新数字一定可以单成一个组，然后对于后面新加的数字考虑是否可以和前面一个数字拼成一个新的字母(0-25)，如果可以则可以通过前面的前面的状态来转移，边界条件是空的情况下有一种组合
+> $$
+> dp[i] = 
+> \begin{cases}
+> 1 & i == 0 \\
+> dp[i - 1] + dp[i - 2] & 0 <= nums[i - 1] * 10 + nums[i] <= 25 \\
+> dp[i - 1] & others
+> \end{cases}
+> $$
+
+### Code
+
+```c++
+class Solution {
+public:
+    int crackNumber(int ciphertext) {
+        int tmp = ciphertext;
+        int n = 0;
+        while (tmp) ++n, tmp /= 10;
+        vector<int> dp(n + 1);
+        dp[0] = 1;
+        int before = -100;
+        for (int i = 0; i < n; ++i) {
+            int k = ciphertext % 10;
+            dp[i + 1] = dp[i];
+            int t = k * 10 + before;
+            if (10 <= t && t <= 25) dp[i + 1] += dp[i - 1];
+            ciphertext /= 10;
+            before = k;
+        }
+        return dp[n];
+    }
+};
+```
+
+---
+
+### 空间优化——3个变量
+
+> 每次状态转移只依赖于前两个变量，所以用三个变量做存储足矣
+
+#### Code
+
+```c++
+class Solution {
+public:
+    int crackNumber(int ciphertext) {
+        int tmp = ciphertext;
+        int n = 0;
+        while (tmp) ++n, tmp /= 10;
+        int before = -100;
+        int a, b, c;
+        a = b = 1;
+        for (int i = 0; i < n; ++i) {
+            int k = ciphertext % 10;
+            c = b;
+            int t = k * 10 + before;
+            if (10 <= t && t <= 25) c += a;
+            ciphertext /= 10;
+            before = k;
+            a = b, b = c;
+        }
+        return b;
+    }
+};
+```
+
+---
+
+## LCR 166. 珠宝的最高价值
+
+> Problem: [LCR 166. 珠宝的最高价值](https://leetcode.cn/problems/li-wu-de-zui-da-jie-zhi-lcof/description/)
+
+### 思路
+
+> 我们要求到达右下角的最大价值，而最后这一步可以由前一步向下或者向右到达，也就是说我们要求出到达他上面和左边的最大值，然后取最大值。接着求他们也是同样的问题，于是就划分成了同样的子问题，而边界就是左上角没有位置可以转移，就只有自己
+> $$
+> dp[i][j] =
+> \begin{cases}
+> max(dp[i - 1][j], dp[i][j - 1]) + frame[i][j] & i >= 0 \and j >= 0 \\
+> 0 & i < 0 \or j < 0
+> \end{cases}
+> $$
+
+### Code
+
+```c++
+class Solution {
+
+    int dfs(const vector<vector<int>>& frame, int x, int y)
+    {
+        if (x < 0 || y < 0) return 0;
+        return max(dfs(frame, x - 1, y), dfs(frame, x, y - 1)) + frame[x][y];
+    }
+public:
+    int jewelleryValue(vector<vector<int>>& frame) {
+        int n = frame.size(), m = frame[0].size();
+        return dfs(frame, n - 1, m - 1);
+    }
+};
+```
+
+---
+
+### 时间优化——记忆化搜索
+
+> 上面有挺多重复计算的，所以我们通过记忆化搜索优化掉这些不必要的递归
+
+#### Code
+
+```c++
+class Solution {
+    vector<vector<int>> dp;
+
+    int dfs(const vector<vector<int>>& frame, int x, int y)
+    {
+        if (x < 0 || y < 0) return 0;
+        int& res = dp[x][y];
+        if (res) return res;
+        return res = max(dfs(frame, x - 1, y), dfs(frame, x, y - 1)) + frame[x][y];
+    }
+public:
+    int jewelleryValue(vector<vector<int>>& frame) {
+        int n = frame.size(), m = frame[0].size();
+        dp.resize(n, vector<int>(m));
+        return dfs(frame, n - 1, m - 1);
+    }
+};
+```
+
+---
+
+### 递归转递推
+
+> 递归的过程是从后往前，递推的过程则是逆向的从前往后推，状态转移方程还是不变的，记忆化数组可以继续复用，不过这里懒得考虑边界条件了，就多开了一层
+
+#### Code
+
+```c++
+class Solution {
+    vector<vector<int>> dp;
+public:
+    int jewelleryValue(vector<vector<int>>& frame) {
+        int n = frame.size(), m = frame[0].size();
+        dp.resize(n + 1, vector<int>(m + 1));
+        for (int i = 1; i <= n; ++i) {
+            for (int j = 1; j <= m; ++j) {
+                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]) + frame[i - 1][j - 1];
+            }
+        }
+        return dp[n][m];
+    }
+};
+```
+
+---
+
+#### 空间优化——翻转数组
+
+> 因为每次都只依赖于上一层和当前层左侧完成转移，所以最多保留两层就行了
+
+##### Code
+
+```c++
+class Solution {
+    vector<vector<int>> dp;
+public:
+    int jewelleryValue(vector<vector<int>>& frame) {
+        int n = frame.size(), m = frame[0].size();
+        dp.resize(2, vector<int>(m + 1));
+        for (int i = 1; i <= n; ++i) {
+            int k = i % 2;
+            int z = k ^ 1;
+            for (int j = 1; j <= m; ++j) {
+                dp[k][j] = max(dp[z][j], dp[k][j - 1]) + frame[i - 1][j - 1];
+            }
+        }
+        return dp[n % 2][m];
+    }
+};
+```
+
+---
+
+#### 空间再优化——一维数组
+
+> 因为每次依赖于上一层的数据都是依赖于当前层左侧数据以及上一层原位置数据，所以正向遍历即可用一维数组来代替
+
+##### Code
+
+```c++
+class Solution {
+    vector<int> dp;
+public:
+    int jewelleryValue(vector<vector<int>>& frame) {
+        int n = frame.size(), m = frame[0].size();
+        dp.resize(m + 1);
+        for (int i = 1; i <= n; ++i) {
+            for (int j = 1; j <= m; ++j) {
+                dp[j] = max(dp[j], dp[j - 1]) + frame[i - 1][j - 1];
+            }
+        }
+        return dp[m];
+    }
+};
+```
+
+---
+
+#### 极致空间——原地修改
+
+> 原二维数组中的数据其实都是一次性的，我们只关心最后的结果，所以直接在原数组中原地修改即可
+
+##### Code
+
+```c++
+class Solution {
+public:
+    int jewelleryValue(vector<vector<int>>& frame) {
+        int n = frame.size(), m = frame[0].size();
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                int k = 0;
+                if (i) k = frame[i - 1][j];
+                if (j) k = max(k, frame[i][j - 1]);
+                frame[i][j] += k;
+            }
+        }
+        return frame[n - 1][m - 1];
+    }
+};
+```
+
+---
+
+## LCR 185. 统计结果概率
+
+> Problem: [LCR 185. 统计结果概率](https://leetcode.cn/problems/nge-tou-zi-de-dian-shu-lcof/description/)
+
+### 思路
+
+> 这题求概率实际上可以用当前的可能数除所有的可能数，所有的可能数非常好求，一个筛子有6个可能，那么此时两个就是$6^2$，三个就是$6^3$。。。于是n个筛子就是$6^n$
+>
+> 现在问题是如何求n个筛子的情况下出现数k的可能性有多少种，其实我们可以假设，当前n个筛子抛出k的概率为`dp[n][k]`，假如我们其中一个现在是6，那么问题就转换成了`dp[n - 1][k - 6]`，于是我们只需要将当前的6个数都枚举一遍再通过上一层的枚举就能求出当前的可能性，那么就可以状态转移了
+> $$
+> dp[i][j] = 
+> \begin{cases}
+> 0 & i == 0, j <> 0 \\
+> 1 & i == j == 0 \\
+> \sum_{k = 1}^6dp[i - 1][j - k] & i > 0
+> \end{cases}
+> $$
+
+### 注意点
+
+> 当然还得加上记忆化搜索，筛子最多有11个，用4位即可表示，所以我们空出剩下4位给筛子个数即可
+
+### Code
+
+```c++
+class Solution {
+    using ll = long long;
+    unordered_map<ll, double> dp;
+    double find(int target, int num)
+    {
+        if (target < 0) return 0;
+        if (!num) return !target;
+        int ssr = target << 4 | num;
+        if (dp.count(ssr)) return dp[ssr];
+        double& res = dp[ssr];
+        if (res) return res;
+        for (int i = 1; i <= 6; ++i) res += find(target - i, num - 1);
+        return res;
+    }
+
+public:
+    vector<double> statisticsProbability(int num) {
+        int n = num * 3 - (num - 1);
+        int ssr = 1;
+        for (int i = 0; i < num; ++i) ssr *= 6;
+        vector<double> ans;
+        for (int i = num; i <= 6 * num; ++i) ans.emplace_back(find(i, num) / ssr);
+        return ans;
+    }
+};
+```
+
+---
+
+## LCR 187. 破冰游戏
+
+> Problem: [LCR 187. 破冰游戏](https://leetcode.cn/problems/yuan-quan-zhong-zui-hou-sheng-xia-de-shu-zi-lcof/description/)
+
+### 思路1——暴力纯模拟
+
+> 一轮轮计数，并一边记录每次删了哪些数，最终出答案，但这个时间复杂度会非常高，如果数据量很大那么就废了
+
+### 思路2——动态规划
+
+> 假如总共有n - 1个数字，取第k个消除，其结果为x。而如果是长度为n，那么删除的第一个数一定是$target \% n$，此时问题就转换成了n-1个数的问题，差别就差在相对于n-1的答案偏移了`target`
+>
+> 所以状态转移方程为：
+> $$
+> dp[n] =
+> \begin{cases}
+> (dp[n - 1] + target) \% n & n > 1 \\
+> 1 & 0
+> \end{cases}
+> $$
+
+### Code
+
+```c++
+class Solution {
+public:
+    int iceBreakingGame(int num, int target) {
+        if (num == 1) return 0;
+        return (target + iceBreakingGame(num - 1, target)) % num;
+    }
+};
+```
+
+---
+
+### 递归转递推
+
+> 我们逆着递归即可，状态转移方程都一样
+
+#### Code
+
+```c++
+class Solution {
+public:
+    int iceBreakingGame(int num, int target) {
+        vector<int> ssr;
+        ssr.emplace_back(0);
+        for (int i = 1; i < num; ++i) ssr.emplace_back((target + ssr.back()) % (i + 1));
+        return ssr.back();
+        if (num == 1) return 0;
+        return (target + iceBreakingGame(num - 1, target)) % num;
+    }
+};
+```
+
+---
+
+### 空间优化——单变量
+
+> 我们可以发现，每次转移实际上只依赖于上一个数，于是不需要开那么大的数组，用一个变量代替即可
+
+#### Code
+
+```c++
+class Solution {
+public:
+    int iceBreakingGame(int num, int target) {
+        int last = 0;
+        for (int i = 1; i < num; ++i) last = (target + last) % (i + 1);
+        return last;
+    }
+};
+```
+
+---
+
+# 图
+
+## LCR 129. 字母迷宫
+
+> Problem: [LCR 129. 字母迷宫](https://leetcode.cn/problems/ju-zhen-zhong-de-lu-jing-lcof/description/)
+
+### 思路
+
+> 这题简单的回溯即可，dfs一直遍历然后一边记录当前哪些位置访问过了就行，枚举每个点作为起始点
+
+### Code
+
+```c++
+class Solution {
+    int n, m;
+    int k;
+    vector<vector<bool>> vis;
+    bool dfs(vector<vector<char>>& grid, int pos, const string& target, int x, int y)
+    {
+        if (pos == k) return true;
+        if (x < 0 || x >= n || y < 0 || y >= m) return false;
+        if (grid[x][y] != target[pos] || vis[x][y]) return false;
+        vis[x][y] = true;
+        bool res = dfs(grid, pos + 1, target, x + 1, y) ||
+                dfs(grid, pos + 1, target, x - 1, y) ||
+                dfs(grid, pos + 1, target, x, y + 1) ||
+                dfs(grid, pos + 1, target, x, y - 1);
+        vis[x][y] = false;
+        return res;
+
+    }
+
+public:
+    bool wordPuzzle(vector<vector<char>>& grid, string target) {
+        n = grid.size(), m = grid[0].size();
+        vis.resize(n, vector<bool>(m));
+        k = target.size();
+        for (int i = 0; i < n; ++i) for (int j = 0; j < m; ++j) if (dfs(grid, 0, target, i, j)) return true;
+        return false;
+    }
+};
+```
+
+---
+
+## LCR 130. 衣橱整理
+
+> Problem: [LCR 130. 衣橱整理](https://leetcode.cn/problems/ji-qi-ren-de-yun-dong-fan-wei-lcof/description/)
+
+### 思路
+
+> dfs遍历即可
+
+### Code
+
+```c++
+class Solution {
+    vector<vector<bool>> vis;
+    int m, n;
+    int cnt;
+    int digit(int x)
+    {
+        int res = 0;
+        while (x) res += x % 10, x /= 10;
+        return res;
+    }
+    int dfs(int x, int y)
+    {
+        if (x < 0 || x >= m || y < 0 || y >= n) return 0;
+        if (vis[x][y]) return 0;
+        vis[x][y] = true;
+        if (digit(x) + digit(y) > cnt) return 0;
+        return dfs(x + 1, y) + dfs(x - 1, y) + dfs(x, y + 1) + dfs(x, y - 1) + 1;
+    }
+public:
+    int wardrobeFinishing(int m, int n, int cnt) {
+        vis.resize(m, vector<bool>(n));
+        this->m = m, this->n = n, this->cnt = cnt;
+        return dfs(0, 0);
+    }
+};
+```
+
+---
+
+## LCR 146. 螺旋遍历二维数组
+
+> Problem: [LCR 146. 螺旋遍历二维数组](https://leetcode.cn/problems/shun-shi-zhen-da-yin-ju-zhen-lcof/description/)
+
+### 思路
+
+> 地图不大，vis记录一下访问过的位置，然后dfs模拟螺旋遍历过程即可
+
+### Code
+
+```c++
+class Solution {
+    vector<vector<bool>> vis;
+    int n, m;
+    int nx[4] = {0, 1, 0, -1};
+    int ny[4] = {1, 0, -1, 0};
+    vector<int> ans;
+
+    bool dfs(vector<vector<int>>& array, int x, int y, int f)
+    {
+        if (x < 0 || x >= n || y < 0 || y >= m) return false;
+        if (vis[x][y]) return false;
+        vis[x][y] = true;
+        ans.emplace_back(array[x][y]);
+        if (!dfs(array, x + nx[f], y + ny[f], f) && !dfs(array, x + nx[(f + 1) % 4], y + ny[(f + 1) % 4], (f + 1) % 4)) return false;
+        return true;
+    }
+
+public:
+    vector<int> spiralArray(vector<vector<int>>& array) {
+        if (array.empty()) return {};
+        n = array.size(), m = array[0].size();
+        vis.resize(n, vector<bool>(m));
+        dfs(array, 0, 0, 0);
+        return ans;
+    }
+};
+```
+
+---
+
+# 贪心
+
+## LCR 188. 买卖芯片的最佳时机
+
+> Problem: [LCR 188. 买卖芯片的最佳时机](https://leetcode.cn/problems/gu-piao-de-zui-da-li-run-lcof/description/)
+
+### 思路
+
+> 只能买卖一次，我们肯定希望买入的价格是最低的，卖出的价格是最高的，而且我们只能在买入后才能卖出
+>
+> 所以我们可以贪心的记录下当前遇到的最低价格，并不断用更小的价格来更新当前价格，未来遇到的任何大于当期最小价格的值都有可能作为最后的答案
+
+### Code
+
+```c++
+class Solution {
+public:
+    int bestTiming(vector<int>& prices) {
+        int ans = 0, mi = 1e9;
+        for (int x: prices) ans = max(ans, x - mi), mi = min(mi, x);
+        return ans;
+    }
+};
+```
+
